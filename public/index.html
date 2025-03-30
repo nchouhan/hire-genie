@@ -10,7 +10,8 @@
 </head>
 <body>
     <header>
-        <h1>Recruitment Agent Dashboard</h1>
+        <h1 class="animated-gradient-header">Talenta AI Agent</h1>
+        <!-- <h1>Recruitment Agent Dashboard</h1> -->
         <!-- Add navigation if needed -->
     </header>
 
@@ -71,18 +72,78 @@
                 </div>
             </div>
 
-            <div id="job-details-view" class="view">
+            <!-- <div id="job-details-view" class="view">
                 <h2 id="job-details-title">Job Details</h2>
                 <p><strong id="job-details-id"></strong></p>
-                <button id="show-enhance-view-btn" class="btn secondary-btn" style="float: right;">Enhance with AI</button> <!-- Add this button -->
-                <pre id="job-details-full-desc" class="output-area"></pre> <!-- To show full JD -->
+                <button id="show-enhance-view-btn" class="btn secondary-btn" style="float: right;">Enhance with AI</button>
+                <pre id="job-details-full-desc" class="output-area"></pre>
                 <hr>
                 <h3>Applicants</h3>
                 <div id="applicant-list">
-                    <!-- Applicant list for the selected job -->
+                    Applicant list for the selected job
                     <p>No applicants yet or none selected.</p>
                 </div>
-            </div>
+            </div> -->
+            <div id="job-details-view" class="view">
+                <!-- Job Title and ID -->
+               <h2 id="job-details-title" class="view-title">Job Title Loading...</h2>
+               <p id="job-details-id" class="job-id-display">ID: ---</p>
+   
+                <!-- *** ADD BUTTON BACK HERE *** -->
+                <button id="show-enhance-view-btn" class="btn secondary-btn enhance-button-job-details">
+                    <span class="material-icons" style="font-size: 1.1em; margin-right: 4px;">auto_awesome</span> Enhance with AI
+                </button>
+                <!-- *************************** -->
+
+               <!-- Meta Information Section -->
+               <div class="job-meta-info">
+                   <div class="meta-item">
+                       <span class="material-icons meta-icon">business_center</span>
+                       <span id="job-details-department" class="meta-value">---</span>
+                   </div>
+                   <div class="meta-item">
+                       <span class="material-icons meta-icon">location_on</span>
+                       <span id="job-details-location" class="meta-value">---</span>
+                   </div>
+                   <div class="meta-item">
+                       <span class="material-icons meta-icon">payments</span>
+                       <span id="job-details-salary" class="meta-value">---</span>
+                   </div>
+                    <div class="meta-item">
+                       <span class="material-icons meta-icon">work_history</span>
+                       <span id="job-details-status" class="meta-value">---</span>
+                   </div>
+               </div>
+   
+               <!-- Description Section -->
+               <div class="job-section">
+                   <h5 class="section-header">Description</h5>
+                   <p id="job-details-description" class="section-content">Loading description...</p>
+               </div>
+   
+               <!-- Requirements Section -->
+               <div class="job-section">
+                   <h5 class="section-header">Requirements</h5>
+                   <ul id="job-details-requirements-list" class="section-content job-list-items">
+                       <li>Loading requirements...</li>
+                   </ul>
+               </div>
+   
+                <!-- Nice-to-Have Section -->
+               <div class="job-section">
+                   <h5 class="section-header">Nice-to-Have</h5>
+                    <ul id="job-details-nice-to-have-list" class="section-content job-list-items">
+                        <li>Loading nice-to-have...</li>
+                    </ul>
+               </div>
+   
+                <!-- Applicants Section (Keep as is) -->
+               <hr>
+               <h3>Applicants</h3>
+               <div id="applicant-list">
+                   <p>No applicants yet or none selected.</p>
+               </div>
+           </div>
             
             <div id="enhance-job-view" class="view">
                 <button id="back-to-job-from-enhance-btn" class="btn back-btn"><span class="material-icons">arrow_back</span> Back to Job Details</button>

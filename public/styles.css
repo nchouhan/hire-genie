@@ -90,10 +90,69 @@ header {
     z-index: 10;
 }
 
-header h1 {
-    font-weight: 500; /* Medium weight */
-    font-size: 1.375rem; /* 22px */
+
+/* --- Animated Gradient Header --- */
+
+.animated-gradient-header {
+    font-weight: 500; /* Or adjust as desired */
+    font-size: 1.8rem; /* Make it prominent - adjust size as needed */
+    letter-spacing: 0.5px; /* Optional: Adjust letter spacing */
+    display: inline-block; /* Important for background-clip to work correctly */
+
+    /* Define the gradient - choose colors inspired by Gemini/Google */
+    background-image: linear-gradient(
+        to right, /* Gradient direction */
+        #4285F4, /* Google Blue */
+        #9c27b0, /* Purple */
+        #EA4335, /* Google Red */
+        #FBBC05, /* Google Yellow */
+        #34A853, /* Google Green */
+        #4285F4  /* Loop back to blue for smoother animation */
+    );
+
+    /* Set the background size - Needs to be larger than 100% to allow movement */
+    background-size: 250% auto; /* Adjust percentage for gradient spread */
+
+    /* Clip the background to the text */
+    background-clip: text;
+    -webkit-background-clip: text; /* For Safari/Chrome */
+
+    /* Make the text color transparent so the background shows through */
+    color: transparent;
+    -webkit-text-fill-color: transparent; /* For Safari/Chrome */
+
+    /* Apply the animation */
+    animation: gradient-flow 8s linear infinite; /* name duration timing iteration */
 }
+
+/* Define the animation keyframes */
+@keyframes gradient-flow {
+    0% {
+        background-position: 0% 50%; /* Start position */
+    }
+    50% {
+        background-position: 100% 50%; /* Move to end position */
+    }
+    100% {
+        background-position: 0% 50%; /* Loop back to start */
+    }
+}
+
+/* --- Adjust existing header styles if needed --- */
+header {
+    background-color: var(--background-white);
+    color: var(--text-primary);
+    padding: 0.8rem 2rem;
+    box-shadow: 0 1px 2px 0 rgba(60, 64, 67, 0.1);
+    border-bottom: 1px solid var(--border-color);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    /* Add alignment if needed, e.g., center the h1 */
+    /* text-align: center; */
+}
+
+
 
 /* 4. Typography */
 h2 {
@@ -356,17 +415,17 @@ hr {
 }
 .output-area,
 #job-details-full-desc {
-    background-color: var(--background-light);
-    border: 1px solid var(--border-color);
+    /* background-color: var(--background-light);
+    border: 1px solid var(--border-color); */
     padding: 1rem; /* More padding */
-    border-radius: var(--border-radius);
+    /* border-radius: var(--border-radius); */
     white-space: pre-wrap;
     word-wrap: break-word;
-    font-family: 'Roboto Mono', monospace; /* Consider monospace */
+    /* font-family: 'Roboto Mono', monospace; Consider monospace */
     font-size: var(--small-font-size);
     margin-top: 0.5rem;
-    max-height: 250px;
-    overflow-y: auto;
+    /* max-height: 250px; */
+    /* overflow-y: auto; */
     line-height: 1.6;
     color: var(--text-primary);
 }
@@ -449,144 +508,322 @@ hr {
 
 
 /* 12. Enhancement View */
-#enhance-job-view h2 span {
-    font-weight: 400; /* Lighter weight for job title */
-    font-size: 1.1rem;
-    color: var(--text-secondary);
+/* Container for all field sections */
+#enhancement-fields {
+    margin-top: 1.5rem;
 }
-.enhancement-field {
-    display: flex; /* Switch to Flexbox for simpler alignment */
-    gap: 1.5rem; /* Increase gap */
-    margin-bottom: 1.5rem;
-    border-bottom: 1px solid var(--border-color);
+
+/* Styling for each distinct field section (Title, Description, etc.) */
+.enhancement-field-section {
+    margin-bottom: 2.5rem; /* More space between sections */
     padding-bottom: 1.5rem;
+    border-bottom: 1px solid var(--border-color);
 }
-.enhancement-field > div { /* Target direct children: original, suggested, actions */
-    flex: 1; /* Let them share space */
+.enhancement-field-section:last-child {
+    border-bottom: none;
+    margin-bottom: 1rem; /* Less margin at the very end */
 }
-.enhancement-field .actions {
-    flex: 0 0 120px; /* Fixed width for actions */
+
+/* Header for each field section */
+.field-section-header {
+    font-size: 1rem; /* Slightly larger header */
+    font-weight: 500;
+    color: var(--text-primary);
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid var(--google-blue); /* Accent line */
+    display: inline-block; /* Make border only as wide as text */
+}
+
+/* Wrapper for the side-by-side comparison columns */
+.comparison-wrapper {
+    display: grid; /* Use Grid for layout */
+    /* Adjust column sizing: ~40% for content, fixed for button */
+    grid-template-columns: minmax(200px, 2fr) minmax(200px, 2fr) 140px;
+    gap: 1.5rem; /* Gap between columns */
+    align-items: center; /* Align items to the top */
+}
+
+/* Styling for each column */
+.comparison-column {
+    /* display: flex;
+    flex-direction: column; Stack label and content box */
+}
+
+/* General title styling */
+.view-title {
+    margin-bottom: 0.25rem; /* Less space below title */
+}
+/* Style for Job ID */
+.job-id-display {
+    font-size: var(--label-font-size); /* Smaller */
+    color: var(--text-secondary);
+    margin-bottom: 1.5rem; /* Space below ID */
+}
+.enhance-button-job-details {
+    float: right; /* Position to the top right */
+    margin-top: -40px; /* Adjust vertical position relative to title/ID */
+    /* Alternatively use position:absolute relative to #job-details-view if float causes issues */
+    /* position: absolute; */
+    /* top: 2rem; */ /* Adjust as needed */
+    /* right: 2rem; */ /* Adjust as needed */
+    display: inline-flex; /* Ensure icon and text align */
+    align-items: center;
+}
+/* Container for meta info (Dept, Location, Salary, Status) */
+/* Ensure other elements clear the floated button if needed */
+
+
+.job-meta-info {
     display: flex;
-    flex-direction: column;
-    align-items: center; /* Center button */
-    justify-content: center; /* Center vertically */
+    flex-wrap: wrap; /* Allow wrapping on smaller screens */
+    gap: 1rem 2rem; /* Row gap, Column gap */
+    margin-bottom: 2rem; /* Space below meta info */
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid var(--border-color);
 }
-.enhancement-field h5 { /* Remove grid span */
-    margin-bottom: 8px;
-    font-size: 1rem;
-    color: #333;
+
+.meta-item {
+    display: flex;
+    align-items: center;
+    min-width: 200px; /* Ensure items don't get too squished */
 }
-.enhancement-field .original-content {
-    padding: 1rem;
-    border: 1px solid var(--border-color);
-    background-color: var(--background-light); /* Slightly off-white */
-    border-radius: var(--border-radius);
+
+.meta-icon {
+    color: var(--google-blue); /* Use accent color for icons */
+    margin-right: 0.6rem; /* Space between icon and text */
+    font-size: 1.25rem; /* Slightly larger icon */
+}
+
+.meta-value {
     font-size: var(--small-font-size);
-    min-height: 60px;
+    color: var(--text-primary);
 }
-.enhancement-field .original-content strong,
-.enhancement-field .suggested-content strong { /* Style labels similarly */
-   display: block;
-   font-size: var(--label-font-size);
-   color: var(--text-secondary);
-   font-weight: 500;
-   margin-bottom: 0.5rem;
-   text-transform: uppercase;
-   letter-spacing: 0.5px;
+
+/* Styling for distinct job sections (Description, Requirements, etc.) */
+.job-section {
+    margin-bottom: 2rem; /* Space between sections */
 }
-.enhancement-field .original-content pre {
+
+.section-header {
+    font-size: 0.9rem; /* 14.4px */
+    font-weight: 500;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 0.75rem; /* Space below header */
+    border-bottom: 1px solid var(--border-color); /* Subtle separator */
+    padding-bottom: 0.4rem;
+}
+
+.section-content {
+    font-size: var(--small-font-size);
+    line-height: 1.6;
+    color: var(--text-primary);
+    padding-left: 0.5rem; /* Slight indent for content */
+}
+
+
+.job-list-items {
+    list-style: none;
+    padding-left: 0.5rem; /* Match indent */
+    margin: 0;
+}
+.job-list-items li {
+    margin-bottom: 0.5rem; /* Space between list items */
+    position: relative;
+    padding-left: 1.5rem; /* Space for custom bullet/icon */
+}
+/* Custom bullet point using ::before */
+.job-list-items li::before {
+    content: ''; /* Empty content */
+    position: absolute;
+    left: 0.25rem; /* Position relative to padding-left */
+    top: 0.5em; /* Align vertically (adjust as needed) */
+    transform: translateY(-50%);
+    width: 6px;
+    height: 6px;
+    background-color: var(--google-blue); /* Use accent color */
+    border-radius: 50%;
+}
+/* Ensure NO scrolling on the view itself */
+#job-details-view {
+    overflow: visible; /* Override any potential inherited overflow */
+    height: auto;
+    max-height: none;
+}
+
+
+
+/* Label above each content box */
+.column-label {
+    font-size: var(--label-font-size);
+    color: var(--text-secondary);
+    font-weight: 500;
+    margin-bottom: 0.4rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Styling for the content boxes (both original and suggested) */
+.content-box {
+    background-color: var(--background-white); /* White background */
+    border: 1px solid var(--border-color); /* Standard border */
+    border-radius: var(--border-radius);
+    padding: 0.8rem 1rem; /* Adjust padding */
+    font-size: var(--small-font-size);
+    min-height: 50px; /* Maintain min height */
+    height: 100%; /* Try to make boxes fill vertical space if needed */
+    display: flex; /* Allow content inside to stretch */
+    flex-direction: column;
+}
+
+/* Specific styling for the original content box */
+.original-content {
+    background-color: var(--background-light); /* Slightly different background */
+}
+.original-content pre {
     white-space: pre-wrap;
     word-wrap: break-word;
-    font-family: inherit;
+    font-family: inherit; /* Use default font, not monospace unless desired */
     margin: 0;
     padding: 0;
-    line-height: 1.6;
-    color: var(--text-primary); /* Ensure text color */
+    line-height: 1.5;
+    color: var(--text-primary);
+    flex-grow: 1; /* Allow pre to fill space */
 }
 
-/* --- Suggested/Editable Content Box --- */
-.enhancement-field .suggested-content {
-    padding: 1rem;
-    /* Option 1: Subtle border (like other inputs) */
-    /* border: 1px solid var(--border-color); */
-    /* Option 2: Slightly different background (subtle) */
-    background-color: var(--background-white); /* Or keep white if preferred */
-    border: 1px solid transparent; /* Use transparent border to maintain layout space */
+/* Styling for the input/textarea within the suggested box */
+.suggested-content textarea,
+.suggested-content input[type="text"] {
+    display: block;
+    width: 100%;
+    height: 100%; /* Fill the container height */
+    flex-grow: 1; /* Allow input to fill space */
+    /* Minimal default appearance */
+    border: none; /* Remove default border inside the box */
+    background-color: transparent; /* Inherit background */
+    padding: 0; /* Remove internal padding, rely on parent */
+    font-size: inherit;
+    color: var(--text-primary);
+    resize: vertical;
+    border-radius: 0; /* No rounding inside */
+    line-height: 1.5;
+    margin: 0;
+    transition: box-shadow 0.2s ease-in-out; /* Transition for focus */
+}
+.suggested-content textarea:focus,
+.suggested-content input[type="text"]:focus {
+    outline: none; /* Remove default browser outline */
+    /* Optional: subtle inner shadow or rely on parent box focus */
+    /* box-shadow: inset 0 0 0 1px var(--google-blue); */
+}
+
+/* FOCUS state for the entire suggested content BOX */
+.suggested-content:has(textarea:focus),
+.suggested-content:has(input[type="text"]:focus) {
+     border-color: var(--google-blue);
+     box-shadow: 0 0 0 1px var(--google-blue);
+}
+
+/* APPLIED SUGGESTION Highlight state for the suggested content BOX */
+.suggested-content.suggestion-applied-highlight {
+    border-color: var(--google-green);
+    box-shadow: 0 0 0 1px var(--google-green);
+    /* Maybe slight background change */
+    /* background-color: #e6f4ea; */
+}
+/* Remove highlight from input itself if parent box is highlighted */
+.suggested-content.suggestion-applied-highlight textarea,
+.suggested-content.suggestion-applied-highlight input[type="text"] {
+    box-shadow: none; /* Prevent double shadow */
+}
+
+
+/* Actions Column Styling */
+.actions-column {
+    justify-content: center; /* Center button vertically */
+}
+.actions-column .btn {
+    width: 100%; /* Full width button */
+    font-size: var(--label-font-size); /* Smaller text */
+    vertical-align: middle;
+}
+
+/* Applied suggestion button state (keep this as before) */
+.actions-column .accept-suggestion-btn.suggestion-applied-btn {
+    background-color: rgba(52, 168, 83, 0.1);
+    border-color: var(--google-green);
+    color: var(--google-green-dark);
+    font-weight: 500;
+}
+.actions-column .accept-suggestion-btn.suggestion-applied-btn .checkmark-icon {
+    display: inline-block;
+    color: var(--google-green);
+}
+.actions-column .accept-suggestion-btn .checkmark-icon {
+    display: none;
+    font-size: 1.1em;
+    vertical-align: text-bottom;
+    margin-left: 6px;
+}
+
+
+/* --- Rationale and Save Button Section --- */
+#enhancement-rationale {
+    margin-top: 1.5rem;
+    border: 1px solid var(--border-color);
     border-radius: var(--border-radius);
+    background-color: var(--background-light);
+    padding: 1rem; /* Keep overall padding on the container */
+    padding-top: 1rem;
+    padding-bottom: 1rem;
     font-size: var(--small-font-size);
-    min-height: 60px;
-    position: relative; /* Needed if using absolute positioned icons later */
+    line-height: 1.6;
+    /* --- Force removal of scroll/height limits --- */
+    max-height: none !important; /* Override any inherited max-height */
+    height: auto !important; /* Let height be determined by content */
+    overflow: visible !important; /* Ensure content isn't clipped or scrolled */
+    /* --- Reset internal default padding/margin just in case --- */
+    padding-top: 1rem; /* Ensure consistent top padding */
+    padding-bottom: 1rem; /* Ensure consistent bottom padding */
+    /* Keep overrides */
+    max-height: none !important;
+    height: auto !important;
+    overflow: visible !important;
+    position: relative; /* Good practice for containers */
+}
+/* Target the wrapper specifically to reset its margin/padding */
+#enhancement-rationale .rationale-content-wrapper {
+    display: flex; /* use flexbox */
+    margin: 0;
+    padding: 1rem; /* Add padding to the top and bottom */
+    /* line-height: 1; TRY: Collapse the line-height of the wrapper itself */
 }
 
-/* Style for the actual input/textarea within the suggested box */
-.enhancement-field .suggested-content textarea,
-.enhancement-field .suggested-content input[type="text"] {
-   display: block; /* Ensure it takes block layout */
-   width: 100%;
-   min-height: 60px; /* Match original */
-   /* Make it visually blend in by default */
-   border: 1px solid var(--border-color); /* STANDARD subtle border */
-   /* OR use border: none; background: transparent; if parent has background */
-   background-color: var(--background-white); /* Ensure white background */
-   padding: 8px; /* Keep padding */
-   font-size: inherit; /* Inherit size */
-   color: var(--text-primary); /* Ensure text color */
-   resize: vertical;
-   border-radius: 4px; /* Slight rounding inside */
-   line-height: 1.6;
-   margin-top: 0;
-   /* Define transition for focus and highlight */
-   transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out, background-color 0.2s ease-in-out;
-}
+#enhancement-rationale strong {
+    color: var(--text-secondary);
+    font-weight: 500;
+    /* display: inline; Keep inline */
+    margin: 0; /* Remove ALL margin */
+    margin-right: 0.5em; /* Add back only right margin */
+    padding: 0;
+    line-height: 1.6; /* RESTORE line-height for the text within the strong tag */
+    /* vertical-align: baseline; Explicitly align baseline */
+    flex-shrink: 0; /* Prevent shrinking */
 
-/* --- FOCUS STATE for Editable Field --- */
-.enhancement-field .suggested-content textarea:focus,
-.enhancement-field .suggested-content input[type="text"]:focus {
-   outline: none; /* Remove default browser outline */
-   border-color: var(--google-blue); /* Google blue border on focus */
-   box-shadow: 0 0 0 1px var(--google-blue); /* Optional subtle blue glow */
-   background-color: var(--background-white); /* Ensure background stays white */
 }
-
-/* --- APPLIED SUGGESTION Highlight State --- */
-/* Selector remains specific */
-.suggested-content > textarea.suggestion-applied-highlight,
-.suggested-content > input[type="text"].suggestion-applied-highlight {
-   border-color: var(--google-green); /* Google Green border */
-   box-shadow: 0 0 0 1px var(--google-green); /* Green focus ring style */
-   /* Background could change slightly too if desired */
-   /* background-color: #e6f4ea; */
+/* Style for the actual rationale text span */
+#rationale-content {
+    display: inline; /* Keep inline */
+     white-space: pre-wrap;
+     word-wrap: break-word;
+     color: var(--text-primary);
+     padding: 0;
+     margin: 0;
+     line-height: 1.6; /* RESTORE line-height for the text within the span */
+     vertical-align: baseline; /* Explicitly align baseline */
 }
-
-/* --- Action Button Styles (Keep as they were, ensure applied state is defined) --- */
-.enhancement-field .actions { /* Adjust alignment if needed */
-   display: flex;
-   flex-direction: column;
-   justify-content: center; /* Center button vertically */
-   align-items: center;
-}
-/* ... (keep existing .actions .btn styles) ... */
-
-/* Applied suggestion button state */
-.enhancement-field .actions .accept-suggestion-btn.suggestion-applied-btn {
-   background-color: rgba(52, 168, 83, 0.1);
-   border-color: var(--google-green);
-   color: var(--google-green-dark);
-   font-weight: 500;
-   /* Remove transition if added !important previously */
-   /* transition: none; */
-}
-.enhancement-field .actions .accept-suggestion-btn.suggestion-applied-btn .checkmark-icon {
-   display: inline-block;
-   color: var(--google-green);
-}
-.enhancement-field .actions .accept-suggestion-btn .checkmark-icon {
-   display: none;
-   font-size: 1.1em;
-   vertical-align: text-bottom;
-   margin-left: 6px;
-}
-
 /* Styling for the loading state container */
 #enhancement-rationale.loading .loading-indicator {
     display: flex; /* Use flex to show and align items */
@@ -633,6 +870,28 @@ hr {
         transform: scale(1);
         opacity: 0.6;
     }
+}
+
+/* --- NEW Rule: Ensure loading indicator takes NO SPACE when NOT loading --- */
+#enhancement-rationale .loading-indicator {
+    /* Default state (when parent does NOT have .loading class) */
+    display: none; /* Already set inline, but good to have in CSS too */
+    padding: 0; /* Remove padding */
+    margin: 0; /* Remove margin */
+    height: 0; /* Collapse height */
+    overflow: hidden; /* Ensure content doesn't spill */
+    line-height: 0; /* Collapse line height */
+    min-height: 0; /* Override min-height */
+}
+/* --- END NEW Rule --- */
+
+/* Save button container */
+#enhance-job-view > div:last-child {
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border-color);
+    display: flex; /* Align save button and status */
+    align-items: center;
 }
 
 /* (Optional: Add a subtle background pattern/gradient to the rationale box when loading) */

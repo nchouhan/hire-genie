@@ -43,7 +43,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const applicantListDiv = document.getElementById('applicant-list');
     const jobDetailsTitle = document.getElementById('job-details-title');
     const jobDetailsId = document.getElementById('job-details-id');
-    const jobDetailsFullDesc = document.getElementById('job-details-full-desc');
+    // const jobDetailsFullDesc = document.getElementById('job-details-full-desc');
     const backToJobBtn = document.getElementById('back-to-job-btn');
     // Enhance View Elements
     const showEnhanceViewBtn = document.getElementById('show-enhance-view-btn');
@@ -86,6 +86,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const aiChatJobIdInput = document.getElementById('ai-chat-job-id');
     const recruiterChatInput = document.getElementById('recruiter-chat-input');
 
+    const jobDetailsDepartment = document.getElementById('job-details-department');
+    const jobDetailsLocation = document.getElementById('job-details-location');
+    const jobDetailsSalary = document.getElementById('job-details-salary');
+    const jobDetailsStatus = document.getElementById('job-details-status');
+    const jobDetailsDescription = document.getElementById('job-details-description');
+    const jobDetailsRequirementsList = document.getElementById('job-details-requirements-list');
+    const jobDetailsNiceToHaveList = document.getElementById('job-details-nice-to-have-list');
 
     // --- State ---
     let jobsData = {}; // { jobId: jobObject }
@@ -152,13 +159,77 @@ document.addEventListener('DOMContentLoaded', () => {
         console.log("Selecting job:", job);
         selectedJobId = jobId;
         selectedApplicantId = null;
-
-        jobDetailsTitle.textContent = job.title;
+        
+        jobDetailsTitle.textContent = job.title || 'N/A'; // Use N/A as fallback
         jobDetailsId.textContent = `ID: ${job.id}`;
-        jobDetailsFullDesc.textContent = ''; // Clear previous
+        
+        // jobDetailsTitle.textContent = job.title;
+        // jobDetailsId.textContent = `ID: ${job.id}`;
+        // jobDetailsFullDesc.textContent = ''; // Clear previous
+        // --- Populate Meta Info ---
+        if (jobDetailsDepartment) jobDetailsDepartment.textContent = job.department || 'N/A';
+        if (jobDetailsLocation) jobDetailsLocation.textContent = job.location || 'N/A';
+        if (jobDetailsSalary) jobDetailsSalary.textContent = job.salaryRange || 'Not specified';
+        if (jobDetailsStatus) jobDetailsStatus.textContent = job.status ? capitalizeFirstLetter(job.status) : 'N/A'; // Capitalize status
+
+        // --- Populate Description ---
+        if (jobDetailsDescription) jobDetailsDescription.textContent = job.description || 'No description provided.';
+
+        // --- Populate Requirements List ---
+        if (jobDetailsRequirementsList) {
+            jobDetailsRequirementsList.innerHTML = ''; // Clear previous items
+            let requirements = job.requirements;
+            if (typeof requirements === 'string') {
+                // Try splitting by newline first, then maybe comma if newline fails often
+                requirements = requirements.split('\n').map(s => s.trim()).filter(s => s);
+            }
+            if (Array.isArray(requirements) && requirements.length > 0) {
+                requirements.forEach(req => {
+                    if(req) { // Ensure req is not empty
+                        const li = document.createElement('li');
+                        li.textContent = req;
+                        jobDetailsRequirementsList.appendChild(li);
+                    }
+                });
+            } else {
+                const li = document.createElement('li');
+                li.textContent = 'N/A';
+                li.style.fontStyle = 'italic'; // Indicate not available
+                li.style.color = 'var(--text-secondary)';
+                li.style.paddingLeft = '0.5rem'; // Reset padding if no bullet needed
+                li.style.listStyle = 'none'; // Ensure no default bullet
+                jobDetailsRequirementsList.appendChild(li);
+            }
+        }
+
+        // --- Populate Nice-to-Have List ---
+        if (jobDetailsNiceToHaveList) {
+            jobDetailsNiceToHaveList.innerHTML = ''; // Clear previous items
+            let niceToHave = job.niceToHave;
+            if (typeof niceToHave === 'string') {
+                niceToHave = niceToHave.split('\n').map(s => s.trim()).filter(s => s);
+            }
+            if (Array.isArray(niceToHave) && niceToHave.length > 0) {
+                niceToHave.forEach(nth => {
+                    if(nth){
+                        const li = document.createElement('li');
+                        li.textContent = nth;
+                        jobDetailsNiceToHaveList.appendChild(li);
+                    }
+                });
+            } else {
+                const li = document.createElement('li');
+                li.textContent = 'N/A';
+                li.style.fontStyle = 'italic';
+                li.style.color = 'var(--text-secondary)';
+                li.style.paddingLeft = '0.5rem';
+                li.style.listStyle = 'none';
+                jobDetailsNiceToHaveList.appendChild(li);
+            }
+        }
         applicantListDiv.innerHTML = '<p>Loading applicants...</p>';
 
-        jobDetailsFullDesc.textContent = `Department: ${job.department || 'N/A'}\nLocation: ${job.location || 'N/A'}\nStatus: ${job.status || 'N/A'}\n\nDescription:\n${job.description || ''}\n\nRequirements:\n${Array.isArray(job.requirements) ? job.requirements.join('\n') : (job.requirements || '')}\n\nNice to Have:\n${job.niceToHave || 'N/A'}\n\nSalary: ${job.salaryRange || 'N/A'}`;
+        // jobDetailsFullDesc.textContent = `Department: ${job.department || 'N/A'}\nLocation: ${job.location || 'N/A'}\nStatus: ${job.status || 'N/A'}\n\nDescription:\n${job.description || ''}\n\nRequirements:\n${Array.isArray(job.requirements) ? job.requirements.join('\n') : (job.requirements || '')}\n\nNice to Have:\n${job.niceToHave || 'N/A'}\n\nSalary: ${job.salaryRange || 'N/A'}`;
 
         renderJobList();
         loadApplicantsForJob(jobId);
@@ -403,27 +474,39 @@ document.addEventListener('DOMContentLoaded', () => {
            aiChatApplicantIdInput.value = applicantId;
            aiChatJobIdInput.value = jobId;
     }
-
     function renderEnhancementView(originalJob, suggestions) {
         // Ensure necessary DOM elements are accessible
+        const enhancementFieldsDiv = document.getElementById('enhancement-fields');
+        const enhanceStatusSpan = document.getElementById('enhance-status');
+        const enhancementRationaleContent = document.getElementById('rationale-content');
+    
         if (!enhancementFieldsDiv || !enhanceStatusSpan || !enhancementRationaleContent) {
             console.error("Essential DOM elements for renderEnhancementView not found!");
             return;
         }
-
+    
         enhancementFieldsDiv.innerHTML = ''; // Clear loading/previous
         enhanceStatusSpan.textContent = '';
-
-        enhancementRationaleContent.textContent = suggestions.suggestionsRationale || 'No specific rationale provided.';
-
+    
+        // Display rationale (make sure loading state handled separately in requestEnhancementSuggestions)
+        const rationaleContentSpan = document.getElementById('rationale-content');
+        // if(rationaleContentSpan) rationaleContentSpan.textContent = suggestions.suggestionsRationale || 'No specific rationale provided.';
+        if (rationaleContentSpan) {
+            // --- Apply .trim() here ---
+            rationaleContentSpan.textContent = (suggestions.suggestionsRationale || 'No specific rationale provided.').trim();
+            // --- End change ---
+        }
+    
+        // Define which fields to show for enhancement
         const fieldsToEnhance = [
             { key: 'title', label: 'Job Title', inputType: 'input' },
             { key: 'description', label: 'Description', inputType: 'textarea' },
             { key: 'requirements', label: 'Requirements', inputType: 'textarea' },
             { key: 'niceToHave', label: 'Nice-to-Have', inputType: 'textarea' }
         ];
-
+    
         fieldsToEnhance.forEach(fieldInfo => {
+            // --- Get Values ---
             const originalValueRaw = originalJob[fieldInfo.key];
             let originalValueString = '';
             if (Array.isArray(originalValueRaw)) {
@@ -431,130 +514,279 @@ document.addEventListener('DOMContentLoaded', () => {
             } else {
                 originalValueString = originalValueRaw || '';
             }
-
             const suggestionKey = `suggested${capitalizeFirstLetter(fieldInfo.key)}`;
             const suggestedValue = suggestions[suggestionKey] || originalValueString;
-
-            const fieldDiv = document.createElement('div');
-            fieldDiv.classList.add('enhancement-field');
-            fieldDiv.dataset.fieldKey = fieldInfo.key;
-
-            const originalSide = document.createElement('div');
-            originalSide.classList.add('original-content');
-            originalSide.innerHTML = `<strong>Original:</strong><pre>${escapeHtml(originalValueString)}</pre>`;
-
-            const suggestedSide = document.createElement('div');
-            suggestedSide.classList.add('suggested-content');
-            let inputElement;
+    
+            // --- Create Main Section Div ---
+            const fieldSectionDiv = document.createElement('div');
+            fieldSectionDiv.classList.add('enhancement-field-section');
+            fieldSectionDiv.dataset.fieldKey = fieldInfo.key;
+            
+            // --- Create Field Header ---
+            const header = document.createElement('h5');
+            header.classList.add('field-section-header');
+            header.textContent = fieldInfo.label;
+            fieldSectionDiv.appendChild(header);
+    
+            // --- Create Comparison Wrapper ---
+            const comparisonWrapper = document.createElement('div');
+            comparisonWrapper.classList.add('comparison-wrapper');
+    
+            // --- Create Original Column ---
+            const originalCol = document.createElement('div');
+            originalCol.classList.add('comparison-column', 'original-column');
+            originalCol.innerHTML = `<div class="column-label">Original</div>`; // Add label
+            const originalContentBox = document.createElement('div');
+            originalContentBox.classList.add('content-box', 'original-content');
+            originalContentBox.innerHTML = `<pre>${escapeHtml(originalValueString)}</pre>`;
+            originalCol.appendChild(originalContentBox);
+            comparisonWrapper.appendChild(originalCol);
+    
+            // --- Create Suggested Column ---
+            const suggestedCol = document.createElement('div');
+            suggestedCol.classList.add('comparison-column', 'suggested-column');
+            suggestedCol.innerHTML = `<div class="column-label">Suggested (Editable)</div>`; // Add label
+            const suggestedContentBox = document.createElement('div'); // This box gets the highlight
+            suggestedContentBox.classList.add('content-box', 'suggested-content');
+            suggestedContentBox.id = `suggested-box-${fieldInfo.key}`; // ID for highlighting parent box
+            let inputElement; // Declare here
             if (fieldInfo.inputType === 'textarea') {
                 inputElement = document.createElement('textarea');
-                inputElement.rows = Math.max(5, (suggestedValue.length / 50));
+                inputElement.rows = Math.max(5, (suggestedValue.length / 50)); // Keep row estimate
             } else {
                 inputElement = document.createElement('input');
                 inputElement.type = 'text';
             }
             inputElement.value = suggestedValue;
-            inputElement.id = `suggested-${fieldInfo.key}`;
-
-            const strongTag = document.createElement('strong');
-            strongTag.textContent = 'Suggested (Editable):';
-            suggestedSide.appendChild(strongTag);
-            suggestedSide.appendChild(inputElement);
-
-            const actionsSide = document.createElement('div');
-            actionsSide.classList.add('actions');
+            inputElement.id = `suggested-${fieldInfo.key}`; // Keep ID on input itself
+            suggestedContentBox.appendChild(inputElement); // Append input into the box
+            suggestedCol.appendChild(suggestedContentBox);
+            comparisonWrapper.appendChild(suggestedCol);
+    
+            // --- Create Actions Column ---
+            const actionsCol = document.createElement('div');
+            actionsCol.classList.add('comparison-column', 'actions-column');
             const acceptBtn = document.createElement('button');
             acceptBtn.id = `accept-btn-${fieldInfo.key}`;
             acceptBtn.classList.add('btn', 'secondary-btn', 'accept-suggestion-btn');
             acceptBtn.type = 'button';
             acceptBtn.innerHTML = `Use Suggestion <span class="material-icons checkmark-icon" style="display: none;">check</span>`;
             const checkmarkIcon = acceptBtn.querySelector('.checkmark-icon');
-
+            actionsCol.appendChild(acceptBtn);
+            comparisonWrapper.appendChild(actionsCol);
+    
+    
+            // --- Event Listener for "Use Suggestion" Button ---
             acceptBtn.addEventListener('click', () => {
                 console.log(`--- 'Use Suggestion' clicked for ${fieldInfo.key} ---`);
-                console.log("Button Element being acted on:", acceptBtn);
-                console.log("Button current classes BEFORE add:", acceptBtn.classList.toString());
                 try {
                     const currentInputElement = document.getElementById(`suggested-${fieldInfo.key}`);
-                    if (!currentInputElement) {
-                        console.error(`ERROR: Could not find input element ID suggested-${fieldInfo.key}`); return;
+                    const currentSuggestionBox = document.getElementById(`suggested-box-${fieldInfo.key}`); // Get the parent box
+                    if (!currentInputElement || !currentSuggestionBox) {
+                        console.error(`Error finding elements for ${fieldInfo.key}`); return;
                     }
-                    console.log("Input Element targeted:", currentInputElement);
-                    const currentSuggestionKey = `suggested${capitalizeFirstLetter(fieldInfo.key)}`;
-                    const aiSuggestedValue = suggestions[currentSuggestionKey] || originalValueString;
-                    console.log("Value to set:", aiSuggestedValue);
-
+    
+                    const aiSuggestedValue = suggestions[suggestionKey] || originalValueString;
+    
+                    // 1. Set Value
                     currentInputElement.value = aiSuggestedValue;
-                    console.log("Input value AFTER setting:", currentInputElement.value);
-
+    
+                    // 2. Dispatch Input Event
                     const inputEvent = new Event('input', { bubbles: true, cancelable: true });
                     currentInputElement.dispatchEvent(inputEvent);
-                    console.log("Dispatched 'input' event.");
-
-                    console.log("Attempting to add 'suggestion-applied-btn' class to button:", acceptBtn);
+    
+                    // 3. Update Button State
                     acceptBtn.classList.add('suggestion-applied-btn');
-                    console.log("Button current classes AFTER add:", acceptBtn.classList.toString());
-
-                    console.log("Checkmark icon element:", checkmarkIcon);
-                    if (checkmarkIcon) {
-                        checkmarkIcon.style.display = 'inline-block';
-                        console.log("Set checkmark icon display to inline-block.");
-                    } else { console.error("Could not find checkmark icon!"); }
-
-                    // Optional Input Highlight Logic
-                    const existingTimeoutId = currentInputElement.dataset.highlightTimeoutId;
-                    if (existingTimeoutId) clearTimeout(parseInt(existingTimeoutId));
-                    currentInputElement.classList.remove('suggestion-applied-highlight');
-                    void currentInputElement.offsetWidth;
-                    currentInputElement.classList.add('suggestion-applied-highlight');
-                    const timeoutId = setTimeout(() => {
-                        currentInputElement.classList.remove('suggestion-applied-highlight');
-                        delete currentInputElement.dataset.highlightTimeoutId;
-                    }, 1500);
-                    currentInputElement.dataset.highlightTimeoutId = timeoutId.toString();
-                    console.log("Highlight logic for input field executed.");
-
-                } catch (error) {
-                    console.error(`Error inside 'Use Suggestion' click listener for ${fieldInfo.key}:`, error);
-                }
+                    if (checkmarkIcon) checkmarkIcon.style.display = 'inline-block';
+    
+                    // 4. Apply Highlight to the BOX now
+                    currentSuggestionBox.classList.add('suggestion-applied-highlight'); // Add to box
+                    console.log("Highlight applied to suggestion box.");
+                    // NO Timeout needed to remove highlight permanently
+    
+                } catch (error) { console.error(`Error in click listener for ${fieldInfo.key}:`, error); }
             }); // End acceptBtn listener
-
-            actionsSide.appendChild(acceptBtn);
-
+    
+    
+            // --- Event Listener for Input Edit ---
             inputElement.addEventListener('input', (event) => {
                 const targetElement = event.target;
-                const relatedBtnId = `accept-btn-${fieldInfo.key}`;
-                const relatedBtn = document.getElementById(relatedBtnId);
-                console.log(`Input event on ${targetElement.id}, looking for button #${relatedBtnId}`);
-                if (relatedBtn) {
-                    console.log(`Found button #${relatedBtnId}, current classes: ${relatedBtn.classList.toString()}`);
-                    if (relatedBtn.classList.contains('suggestion-applied-btn')) {
-                        console.log(`Removing 'suggestion-applied-btn' from #${relatedBtnId}`);
-                        relatedBtn.classList.remove('suggestion-applied-btn');
-                        const iconInBtn = relatedBtn.querySelector('.checkmark-icon');
-                        if (iconInBtn) {
-                            iconInBtn.style.display = 'none';
-                            console.log(`Hid checkmark icon in #${relatedBtnId}`);
-                        }
-                    }
-                } else { console.warn(`Could not find related button #${relatedBtnId}`); }
-
-                if (targetElement.classList.contains('suggestion-applied-highlight')) {
-                    targetElement.classList.remove('suggestion-applied-highlight');
-                    const existingTimeoutId = targetElement.dataset.highlightTimeoutId;
-                    if (existingTimeoutId) clearTimeout(parseInt(existingTimeoutId));
-                    delete targetElement.dataset.highlightTimeoutId;
-                    console.log(`Removed input highlight from ${targetElement.id}.`);
+                const relatedBtn = document.getElementById(`accept-btn-${fieldInfo.key}`);
+                const relatedSuggestionBox = document.getElementById(`suggested-box-${fieldInfo.key}`); // Get the box
+    
+                // Reset Button State
+                if (relatedBtn && relatedBtn.classList.contains('suggestion-applied-btn')) {
+                    relatedBtn.classList.remove('suggestion-applied-btn');
+                    const iconInBtn = relatedBtn.querySelector('.checkmark-icon');
+                    if (iconInBtn) iconInBtn.style.display = 'none';
+                }
+    
+                // Remove Highlight from BOX on edit
+                if (relatedSuggestionBox && relatedSuggestionBox.classList.contains('suggestion-applied-highlight')) {
+                    relatedSuggestionBox.classList.remove('suggestion-applied-highlight');
+                    console.log(`Removed highlight from suggestion box ${relatedSuggestionBox.id}`);
                 }
             }); // End inputElement listener
+    
+    
+            // --- Append Wrapper and Section ---
+            fieldSectionDiv.appendChild(comparisonWrapper);
+            enhancementFieldsDiv.appendChild(fieldSectionDiv);
+    
+        }); // End of fieldsToEnhance.forEach
+    } // End of renderEnhancementView function
 
-            fieldDiv.appendChild(originalSide);
-            fieldDiv.appendChild(suggestedSide);
-            fieldDiv.appendChild(actionsSide);
+    // function renderEnhancementView(originalJob, suggestions) {
+    //     // Ensure necessary DOM elements are accessible
+    //     if (!enhancementFieldsDiv || !enhanceStatusSpan || !enhancementRationaleContent) {
+    //         console.error("Essential DOM elements for renderEnhancementView not found!");
+    //         return;
+    //     }
 
-            enhancementFieldsDiv.appendChild(fieldDiv);
-        }); // End fieldsToEnhance.forEach
-    } // End renderEnhancementView
+    //     enhancementFieldsDiv.innerHTML = ''; // Clear loading/previous
+    //     enhanceStatusSpan.textContent = '';
+
+    //     enhancementRationaleContent.textContent = suggestions.suggestionsRationale || 'No specific rationale provided.';
+
+    //     const fieldsToEnhance = [
+    //         { key: 'title', label: 'Job Title', inputType: 'input' },
+    //         { key: 'description', label: 'Description', inputType: 'textarea' },
+    //         { key: 'requirements', label: 'Requirements', inputType: 'textarea' },
+    //         { key: 'niceToHave', label: 'Nice-to-Have', inputType: 'textarea' }
+    //     ];
+
+    //     fieldsToEnhance.forEach(fieldInfo => {
+    //         const originalValueRaw = originalJob[fieldInfo.key];
+    //         let originalValueString = '';
+    //         if (Array.isArray(originalValueRaw)) {
+    //             originalValueString = originalValueRaw.join('\n');
+    //         } else {
+    //             originalValueString = originalValueRaw || '';
+    //         }
+
+    //         const suggestionKey = `suggested${capitalizeFirstLetter(fieldInfo.key)}`;
+    //         const suggestedValue = suggestions[suggestionKey] || originalValueString;
+
+    //         const fieldDiv = document.createElement('div');
+    //         fieldDiv.classList.add('enhancement-field');
+    //         fieldDiv.dataset.fieldKey = fieldInfo.key;
+
+    //         const originalSide = document.createElement('div');
+    //         originalSide.classList.add('original-content');
+    //         originalSide.innerHTML = `<strong>Original:</strong><pre>${escapeHtml(originalValueString)}</pre>`;
+
+    //         const suggestedSide = document.createElement('div');
+    //         suggestedSide.classList.add('suggested-content');
+    //         let inputElement;
+    //         if (fieldInfo.inputType === 'textarea') {
+    //             inputElement = document.createElement('textarea');
+    //             inputElement.rows = Math.max(5, (suggestedValue.length / 50));
+    //         } else {
+    //             inputElement = document.createElement('input');
+    //             inputElement.type = 'text';
+    //         }
+    //         inputElement.value = suggestedValue;
+    //         inputElement.id = `suggested-${fieldInfo.key}`;
+
+    //         const strongTag = document.createElement('strong');
+    //         strongTag.textContent = 'Suggested (Editable):';
+    //         suggestedSide.appendChild(strongTag);
+    //         suggestedSide.appendChild(inputElement);
+
+    //         const actionsSide = document.createElement('div');
+    //         actionsSide.classList.add('actions');
+    //         const acceptBtn = document.createElement('button');
+    //         acceptBtn.id = `accept-btn-${fieldInfo.key}`;
+    //         acceptBtn.classList.add('btn', 'secondary-btn', 'accept-suggestion-btn');
+    //         acceptBtn.type = 'button';
+    //         acceptBtn.innerHTML = `Use Suggestion <span class="material-icons checkmark-icon" style="display: none;">check</span>`;
+    //         const checkmarkIcon = acceptBtn.querySelector('.checkmark-icon');
+
+    //         acceptBtn.addEventListener('click', () => {
+    //             console.log(`--- 'Use Suggestion' clicked for ${fieldInfo.key} ---`);
+    //             console.log("Button Element being acted on:", acceptBtn);
+    //             console.log("Button current classes BEFORE add:", acceptBtn.classList.toString());
+    //             try {
+    //                 const currentInputElement = document.getElementById(`suggested-${fieldInfo.key}`);
+    //                 if (!currentInputElement) {
+    //                     console.error(`ERROR: Could not find input element ID suggested-${fieldInfo.key}`); return;
+    //                 }
+    //                 console.log("Input Element targeted:", currentInputElement);
+    //                 const currentSuggestionKey = `suggested${capitalizeFirstLetter(fieldInfo.key)}`;
+    //                 const aiSuggestedValue = suggestions[currentSuggestionKey] || originalValueString;
+    //                 console.log("Value to set:", aiSuggestedValue);
+
+    //                 currentInputElement.value = aiSuggestedValue;
+    //                 console.log("Input value AFTER setting:", currentInputElement.value);
+
+    //                 const inputEvent = new Event('input', { bubbles: true, cancelable: true });
+    //                 currentInputElement.dispatchEvent(inputEvent);
+    //                 console.log("Dispatched 'input' event.");
+
+    //                 console.log("Attempting to add 'suggestion-applied-btn' class to button:", acceptBtn);
+    //                 acceptBtn.classList.add('suggestion-applied-btn');
+    //                 console.log("Button current classes AFTER add:", acceptBtn.classList.toString());
+
+    //                 console.log("Checkmark icon element:", checkmarkIcon);
+    //                 if (checkmarkIcon) {
+    //                     checkmarkIcon.style.display = 'inline-block';
+    //                     console.log("Set checkmark icon display to inline-block.");
+    //                 } else { console.error("Could not find checkmark icon!"); }
+
+    //                 // Optional Input Highlight Logic
+    //                 const existingTimeoutId = currentInputElement.dataset.highlightTimeoutId;
+    //                 if (existingTimeoutId) clearTimeout(parseInt(existingTimeoutId));
+    //                 currentInputElement.classList.remove('suggestion-applied-highlight');
+    //                 void currentInputElement.offsetWidth;
+    //                 currentInputElement.classList.add('suggestion-applied-highlight');
+    //                 const timeoutId = setTimeout(() => {
+    //                     currentInputElement.classList.remove('suggestion-applied-highlight');
+    //                     delete currentInputElement.dataset.highlightTimeoutId;
+    //                 }, 1500);
+    //                 currentInputElement.dataset.highlightTimeoutId = timeoutId.toString();
+    //                 console.log("Highlight logic for input field executed.");
+
+    //             } catch (error) {
+    //                 console.error(`Error inside 'Use Suggestion' click listener for ${fieldInfo.key}:`, error);
+    //             }
+    //         }); // End acceptBtn listener
+
+    //         actionsSide.appendChild(acceptBtn);
+
+    //         inputElement.addEventListener('input', (event) => {
+    //             const targetElement = event.target;
+    //             const relatedBtnId = `accept-btn-${fieldInfo.key}`;
+    //             const relatedBtn = document.getElementById(relatedBtnId);
+    //             console.log(`Input event on ${targetElement.id}, looking for button #${relatedBtnId}`);
+    //             if (relatedBtn) {
+    //                 console.log(`Found button #${relatedBtnId}, current classes: ${relatedBtn.classList.toString()}`);
+    //                 if (relatedBtn.classList.contains('suggestion-applied-btn')) {
+    //                     console.log(`Removing 'suggestion-applied-btn' from #${relatedBtnId}`);
+    //                     relatedBtn.classList.remove('suggestion-applied-btn');
+    //                     const iconInBtn = relatedBtn.querySelector('.checkmark-icon');
+    //                     if (iconInBtn) {
+    //                         iconInBtn.style.display = 'none';
+    //                         console.log(`Hid checkmark icon in #${relatedBtnId}`);
+    //                     }
+    //                 }
+    //             } else { console.warn(`Could not find related button #${relatedBtnId}`); }
+
+    //             if (targetElement.classList.contains('suggestion-applied-highlight')) {
+    //                 targetElement.classList.remove('suggestion-applied-highlight');
+    //                 const existingTimeoutId = targetElement.dataset.highlightTimeoutId;
+    //                 if (existingTimeoutId) clearTimeout(parseInt(existingTimeoutId));
+    //                 delete targetElement.dataset.highlightTimeoutId;
+    //                 console.log(`Removed input highlight from ${targetElement.id}.`);
+    //             }
+    //         }); // End inputElement listener
+
+    //         fieldDiv.appendChild(originalSide);
+    //         fieldDiv.appendChild(suggestedSide);
+    //         fieldDiv.appendChild(actionsSide);
+
+    //         enhancementFieldsDiv.appendChild(fieldDiv);
+    //     }); // End fieldsToEnhance.forEach
+    // } // End renderEnhancementView
 
 
     async function requestEnhancementSuggestions(jobId) {
@@ -644,38 +876,69 @@ document.addEventListener('DOMContentLoaded', () => {
         enhanceStatusSpan.textContent = 'Saving...';
         enhanceStatusSpan.className = 'message';
         saveEnhancedJobBtn.disabled = true;
-
-        const originalJob = jobsData[jobId];
+    
+        const originalJob = jobsData[jobId]; // Get current state from frontend cache
         if (!originalJob) {
-             enhanceStatusSpan.textContent = 'Error: Original job data not found.';
-             enhanceStatusSpan.classList.add('error');
-             saveEnhancedJobBtn.disabled = false;
-             return;
+            enhanceStatusSpan.textContent = 'Error: Original job data not found in frontend cache.';
+            enhanceStatusSpan.classList.add('error');
+            saveEnhancedJobBtn.disabled = false;
+            return;
         }
-        const updatedJobData = { ...originalJob };
-
-        document.querySelectorAll('#enhancement-fields .enhancement-field').forEach(fieldDiv => {
+        const updatedJobDataFromForm = { ...originalJob }; // Start with original data
+    
+        // Collect potentially modified values from the enhancement view form fields
+        document.querySelectorAll('#enhancement-fields .enhancement-field-section').forEach(fieldDiv => {
              const fieldKey = fieldDiv.dataset.fieldKey;
              const inputElement = fieldDiv.querySelector(`#suggested-${fieldKey}`);
              if (fieldKey && inputElement) {
-                 if (fieldKey === 'requirements' && Array.isArray(originalJob.requirements)) {
-                      updatedJobData[fieldKey] = inputElement.value.split('\n').map(s => s.trim()).filter(s => s);
+                try {
+                console.log(`Collecting data for field: ${fieldKey}, Input Value:`, inputElement.value); // <-- ADD LOG HERE
+                 if ((fieldKey === 'requirements' || fieldKey === 'niceToHave') && typeof originalJob[fieldKey] === 'object' && originalJob[fieldKey] !== null) {
+                     // If original was array, try to save as array (split by newline)
+                     updatedJobDataFromForm[fieldKey] = inputElement.value.split('\n').map(s => s.trim()).filter(s => s);
+                     console.log(` > Processed as Array for ${fieldKey}:`, updatedJobDataFromForm[fieldKey]);
                  } else {
-                     updatedJobData[fieldKey] = inputElement.value;
+                     // Otherwise save as string
+                     updatedJobDataFromForm[fieldKey] = inputElement.value;
+                     console.log(` > Processed as String for ${fieldKey}:`, updatedJobDataFromForm[fieldKey]);
                  }
-             }
+                } catch (assignmentError) {
+                    console.error(`Error assigning value for field ${fieldKey}:`, assignmentError);
+                }
+             } else {
+                console.warn(`Could not find input element for field key: ${fieldKey} inside`, fieldDiv); // <-- ADD LOG HERE
+            }
         });
-
+        console.log("Final updatedJobDataFromForm object BEFORE sending:", updatedJobDataFromForm);
+    
         try {
-             console.log("Saving Enhanced Job Data:", updatedJobData);
-             const savedJob = await apiRequest(`/api/jobs/${jobId}`, 'PUT', updatedJobData);
-              if (!savedJob || !savedJob.id) { throw new Error("Invalid response after saving job."); }
-             jobsData[jobId] = savedJob;
+             console.log("Sending updated Job Data to PUT /api/jobs/", jobId, ":", updatedJobDataFromForm);
+    
+             // --- Make the PUT request and GET the response ---
+             const actuallySavedJob = await apiRequest(`/api/jobs/${jobId}`, 'PUT', updatedJobDataFromForm);
+             // --- END ---
+    
+             if (!actuallySavedJob || !actuallySavedJob.id) {
+                 // Handle cases where the backend might not return the full object on update
+                 console.warn("PUT request succeeded but didn't return the full updated job object. Using data sent.");
+                 // As a fallback, update local cache with the data we SENT
+                 jobsData[jobId] = updatedJobDataFromForm;
+             } else {
+                // --- Update local cache with the CONFIRMED saved data ---
+                console.log("Received confirmed saved job data:", actuallySavedJob);
+                jobsData[jobId] = actuallySavedJob; // Use the response from the server
+                // --- END ---
+             }
+    
              enhanceStatusSpan.textContent = 'Job updated successfully!';
              enhanceStatusSpan.classList.add('success');
+    
+             // Automatically go back to job details view after a delay
              setTimeout(() => {
-                selectJob(jobId); // Refresh and show job details
+                // Call selectJob which reads from the updated jobsData cache
+                selectJob(jobId);
              }, 1500);
+    
          } catch (error) {
              enhanceStatusSpan.textContent = `Error saving: ${error.message}`;
              enhanceStatusSpan.classList.add('error');
