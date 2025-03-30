@@ -27,7 +27,9 @@ function capitalizeFirstLetter(string) {
 
 document.addEventListener('DOMContentLoaded', () => {
     console.log("app.js: DOMContentLoaded fired, initializing app.");
-
+    // --- Get References to Splash and App Container ---
+    const splashScreen = document.getElementById('splash-screen');
+    const appContainer = document.getElementById('app-container');
     // --- DOM Elements ---
     const createJobBtn = document.getElementById('create-job-btn');
     const jobListDiv = document.getElementById('job-list');
@@ -101,6 +103,38 @@ document.addEventListener('DOMContentLoaded', () => {
     let selectedJobId = null; // Start with no job selected
     let selectedApplicantId = null;
     let rationaleIntervalId = null; // To store the ID of the text cycling interval
+    let dataLoaded = false; // Flag to track if initial data is loaded
+
+    if (splashScreen && appContainer) {
+        // Set timeout for splash screen
+        setTimeout(() => {
+            console.log("Splash screen timeout reached. Transitioning...");
+            splashScreen.classList.add('hidden'); // Start fading out splash
+            appContainer.classList.add('visible'); // Start fading in app
+
+            // Load initial app data *after* initiating the app fade-in
+            // This prevents data loading calls from blocking the visual transition start
+            if (!dataLoaded) { // Only load data once
+                 loadInitialData();
+            }
+
+            // Optional: Remove splash screen from DOM after fade-out is complete
+             setTimeout(() => {
+                if(splashScreen.parentNode) { // Check if it still exists
+                     splashScreen.parentNode.removeChild(splashScreen);
+                     console.log("Splash screen removed from DOM.");
+                }
+             }, 800); // Match the opacity transition duration in CSS
+
+        }, 5000); // 5000 milliseconds = 5 seconds
+    } else {
+        console.error("Splash screen or App container not found! Cannot initialize.");
+        // Handle error appropriately - maybe show an error message directly in body
+        document.body.innerHTML = "<p>Error initializing application structure.</p>";
+        return; // Stop further execution
+    }
+
+
 
     // --- API Helper ---
     async function apiRequest(url, method = 'GET', body = null) {
@@ -521,7 +555,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const fieldSectionDiv = document.createElement('div');
             fieldSectionDiv.classList.add('enhancement-field-section');
             fieldSectionDiv.dataset.fieldKey = fieldInfo.key;
-            
+
             // --- Create Field Header ---
             const header = document.createElement('h5');
             header.classList.add('field-section-header');
@@ -1211,25 +1245,41 @@ document.addEventListener('DOMContentLoaded', () => {
      }
 
      async function loadInitialData() {
+        if (dataLoaded) return; // Prevent multiple loads
         try {
             console.log("Loading initial data...");
             console.log("Attempting to show welcome view in loadInitialData");
-            showView('welcome-view'); // <--- SET INITIAL VIEW HERE AND DON'T CHANGE IT LATER in loadJobs
+            //showView('welcome-view'); // <--- SET INITIAL VIEW HERE AND DON'T CHANGE IT LATER in loadJobs
 
             stagesConfig = await apiRequest('/api/config/stages');
             console.log("Loaded stages config:", stagesConfig);
 
             await loadJobs(); // Load jobs and render the list
             console.log("Initial data load complete. Should be showing Welcome view.");
+            dataLoaded = true; // Mark data as loaded
+
+            const activeView = appContainer.querySelector('.view.active');
+            if (!activeView && welcomeView) { // If NO view is active yet, show welcome
+                 console.log("No view active after load, showing welcome view.");
+                 showView('welcome-view');
+             } else if (activeView) {
+                 console.log(`View ${activeView.id} is already active.`);
+             } else {
+                 console.warn("Welcome view element not found, cannot set default view.");
+             }
 
         } catch (error) {
             console.error("Failed to load initial data:", error);
-            if(welcomeView) welcomeView.innerHTML = `<p class="message error">Failed to load initial application data: ${error.message}</p>`;
-            showView('welcome-view'); // Ensure welcome view is shown even on error
+            if(welcomeView) {
+                 welcomeView.innerHTML = `<p class="message error">Failed to load initial application data: ${error.message}</p>`;
+                 showView('welcome-view'); // Show error within welcome view
+             }
         }
     }
     // --- Initialization ---
-    loadInitialData();
+    // NOTE: loadInitialData() is now called from the setTimeout callback
+    // Do not call it directly here anymore.
+    // loadInitialData();
 
 }); // End DOMContentLoaded listener
 

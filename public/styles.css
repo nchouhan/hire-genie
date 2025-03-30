@@ -92,6 +92,10 @@ header {
 
 
 /* --- Animated Gradient Header --- */
+header .animated-gradient-header {
+    /* Inherits base styles, maybe adjust size */
+    font-size: 1.375rem; /* Regular header size */
+}
 
 .animated-gradient-header {
     font-weight: 500; /* Or adjust as desired */
@@ -150,6 +154,81 @@ header {
     z-index: 10;
     /* Add alignment if needed, e.g., center the h1 */
     /* text-align: center; */
+}
+
+/* --- Splash Screen Styles --- */
+#splash-screen {
+    position: fixed; /* Cover entire viewport */
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 9999; /* Ensure it's on top */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #1a1a1a; /* Dark sophisticated background */
+    /* Optional: Subtle gradient background */
+    /* background: linear-gradient(135deg, #232526 0%, #414345 100%); */
+    opacity: 1;
+    visibility: visible;
+    transition: opacity 0.8s ease-out, visibility 0.8s linear; /* Fade out transition */
+}
+
+#splash-screen.hidden {
+    opacity: 0;
+    visibility: hidden; /* Ensures it's removed from accessibility tree */
+    pointer-events: none; /* Prevent interaction when hidden */
+}
+
+.splash-content {
+    text-align: center;
+    color: #e0e0e0; /* Light text on dark background */
+}
+
+/* Style the title on the splash screen */
+.splash-title {
+    font-size: 3rem; /* Larger title on splash */
+    margin-bottom: 0.5rem;
+    /* Inherits animated-gradient-header styles */
+}
+
+/* Style the tagline */
+.splash-tagline {
+    font-size: 1.1rem;
+    font-weight: 300; /* Lighter weight */
+    color: rgba(255, 255, 255, 0.7); /* Subtler text color */
+    margin-bottom: 2rem;
+    letter-spacing: 0.5px;
+}
+
+/* Optional: Subtle loading indicator */
+.splash-loader {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 3px solid rgba(255, 255, 255, 0.2); /* Light border */
+    border-top-color: #fff; /* White top border */
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* --- App Container Visibility --- */
+#app-container {
+    opacity: 0; /* Start hidden */
+    transition: opacity 0.8s ease-in 0.3s; /* Fade in, slight delay after splash starts fading */
+    /* Ensure display is correct when visible (handled by default block/flex) */
+    /* display: flex; */ /* Uncomment if app-container itself needs flex */
+    /* flex-direction: column; */ /* Uncomment if app-container needs flex */
+    /* min-height: 100vh; */ /* Uncomment if app-container needs flex */
+}
+
+#app-container.visible {
+    opacity: 1; /* Fade it in */
 }
 
 

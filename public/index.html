@@ -1,263 +1,279 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Recruitment Agent Dashboard</title>
-    <link rel="stylesheet" href="styles.css">
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-</head>
-<body>
-    <header>
-        <h1 class="animated-gradient-header">Talenta AI Agent</h1>
-        <!-- <h1>Recruitment Agent Dashboard</h1> -->
-        <!-- Add navigation if needed -->
-    </header>
-
-    <main class="container">
-        <aside class="sidebar">
-            <h2>Jobs</h2>
-            <button id="create-job-btn" class="btn primary-btn">Create New Job</button>
-            <div id="job-list">
-                <!-- Job list will be loaded here -->
-                <p>Loading jobs...</p>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Talenta AI Agent</title> <!-- Update title -->
+        <link rel="stylesheet" href="styles.css">
+        <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+        <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    </head>
+    <body>
+        <!-- === SPLASH SCREEN (Initially Visible) === -->
+        <div id="splash-screen" class="visible">
+            <div class="splash-content">
+                <!-- Re-use the animated gradient style -->
+                <h1 class="animated-gradient-header splash-title">Talenta AI Agent</h1>
+                <p class="splash-tagline">AI Agent for Intelligent Recruitment.</p>
+                <!-- Optional: Add a subtle loading indicator if desired -->
+                <div class="splash-loader"></div>
             </div>
-        </aside>
+        </div>
+        <!-- === END SPLASH SCREEN === -->
 
-        <section class="content">
-            <div id="welcome-view" class="view active">
-                <h2>Welcome</h2>
-                <p>Select a job from the list to view applicants or create a new job.</p>
-            </div>
+        <!-- === MAIN APP CONTAINER (Initially Hidden) === -->
+        <div id="app-container" class="hidden">
+        <header>
+            <h1 class="animated-gradient-header">Talenta AI Agent</h1>
+            <!-- <h1>Recruitment Agent Dashboard</h1> -->
+            <!-- Add navigation if needed -->
+        </header>
 
-            <div id="create-job-view" class="view">
-                <h2>Create New Job</h2>
-                <form id="create-job-form">
-                    <div class="form-group">
-                        <label for="job-title">Job Title:</label>
-                        <input type="text" id="job-title" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="job-department">Department:</label>
-                        <input type="text" id="job-department">
-                    </div>
-                     <div class="form-group">
-                        <label for="job-location">Location:</label>
-                        <input type="text" id="job-location" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="job-description">Core Responsibilities (Draft):</label>
-                        <textarea id="job-description" rows="4" required></textarea>
-                    </div>
-                    <div class="form-group">
-                        <label for="job-requirements">Required Skills (Draft - comma separated):</label>
-                        <textarea id="job-requirements" rows="3" required></textarea>
-                    </div>
-                     <div class="form-group">
-                        <label for="job-nice-to-have">Nice-to-Have Skills (Draft - comma separated):</label>
-                        <textarea id="job-nice-to-have" rows="2"></textarea>
-                    </div>
-                    <div class="form-group">
-                        <label for="job-salary">Salary Range (Optional):</label>
-                        <input type="text" id="job-salary">
-                    </div>
-                    <button type="button" id="enhance-jd-btn" class="btn secondary-btn">Enhance with AI</button>
-                    <button type="submit" class="btn primary-btn">Save Job</button>
-                </form>
-                 <div id="enhanced-jd-output" class="output-area" style="margin-top: 20px; display: none;">
-                    <h3>AI Enhanced Description Preview:</h3>
-                    <pre><code id="enhanced-jd-content"></code></pre>
-                    <button id="use-enhanced-jd-btn" class="btn secondary-btn">Use This Description</button>
+        <main class="container">
+            <aside class="sidebar">
+                <h2>Jobs</h2>
+                <button id="create-job-btn" class="btn primary-btn">Create New Job</button>
+                <div id="job-list">
+                    <!-- Job list will be loaded here -->
+                    <p>Loading jobs...</p>
                 </div>
-            </div>
+            </aside>
 
-            <!-- <div id="job-details-view" class="view">
-                <h2 id="job-details-title">Job Details</h2>
-                <p><strong id="job-details-id"></strong></p>
-                <button id="show-enhance-view-btn" class="btn secondary-btn" style="float: right;">Enhance with AI</button>
-                <pre id="job-details-full-desc" class="output-area"></pre>
+            <section class="content">
+                <div id="welcome-view" class="view active">
+                    <h2>Welcome</h2>
+                    <p>Select a job from the list to view applicants or create a new job.</p>
+                </div>
+
+                <div id="create-job-view" class="view">
+                    <h2>Create New Job</h2>
+                    <form id="create-job-form">
+                        <div class="form-group">
+                            <label for="job-title">Job Title:</label>
+                            <input type="text" id="job-title" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="job-department">Department:</label>
+                            <input type="text" id="job-department">
+                        </div>
+                        <div class="form-group">
+                            <label for="job-location">Location:</label>
+                            <input type="text" id="job-location" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="job-description">Core Responsibilities (Draft):</label>
+                            <textarea id="job-description" rows="4" required></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="job-requirements">Required Skills (Draft - comma separated):</label>
+                            <textarea id="job-requirements" rows="3" required></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="job-nice-to-have">Nice-to-Have Skills (Draft - comma separated):</label>
+                            <textarea id="job-nice-to-have" rows="2"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label for="job-salary">Salary Range (Optional):</label>
+                            <input type="text" id="job-salary">
+                        </div>
+                        <button type="button" id="enhance-jd-btn" class="btn secondary-btn">Enhance with AI</button>
+                        <button type="submit" class="btn primary-btn">Save Job</button>
+                    </form>
+                    <div id="enhanced-jd-output" class="output-area" style="margin-top: 20px; display: none;">
+                        <h3>AI Enhanced Description Preview:</h3>
+                        <pre><code id="enhanced-jd-content"></code></pre>
+                        <button id="use-enhanced-jd-btn" class="btn secondary-btn">Use This Description</button>
+                    </div>
+                </div>
+
+                <!-- <div id="job-details-view" class="view">
+                    <h2 id="job-details-title">Job Details</h2>
+                    <p><strong id="job-details-id"></strong></p>
+                    <button id="show-enhance-view-btn" class="btn secondary-btn" style="float: right;">Enhance with AI</button>
+                    <pre id="job-details-full-desc" class="output-area"></pre>
+                    <hr>
+                    <h3>Applicants</h3>
+                    <div id="applicant-list">
+                        Applicant list for the selected job
+                        <p>No applicants yet or none selected.</p>
+                    </div>
+                </div> -->
+                <div id="job-details-view" class="view">
+                    <!-- Job Title and ID -->
+                <h2 id="job-details-title" class="view-title">Job Title Loading...</h2>
+                <p id="job-details-id" class="job-id-display">ID: ---</p>
+    
+                    <!-- *** ADD BUTTON BACK HERE *** -->
+                    <button id="show-enhance-view-btn" class="btn secondary-btn enhance-button-job-details">
+                        <span class="material-icons" style="font-size: 1.1em; margin-right: 4px;">auto_awesome</span> Enhance with AI
+                    </button>
+                    <!-- *************************** -->
+
+                <!-- Meta Information Section -->
+                <div class="job-meta-info">
+                    <div class="meta-item">
+                        <span class="material-icons meta-icon">business_center</span>
+                        <span id="job-details-department" class="meta-value">---</span>
+                    </div>
+                    <div class="meta-item">
+                        <span class="material-icons meta-icon">location_on</span>
+                        <span id="job-details-location" class="meta-value">---</span>
+                    </div>
+                    <div class="meta-item">
+                        <span class="material-icons meta-icon">payments</span>
+                        <span id="job-details-salary" class="meta-value">---</span>
+                    </div>
+                        <div class="meta-item">
+                        <span class="material-icons meta-icon">work_history</span>
+                        <span id="job-details-status" class="meta-value">---</span>
+                    </div>
+                </div>
+    
+                <!-- Description Section -->
+                <div class="job-section">
+                    <h5 class="section-header">Description</h5>
+                    <p id="job-details-description" class="section-content">Loading description...</p>
+                </div>
+    
+                <!-- Requirements Section -->
+                <div class="job-section">
+                    <h5 class="section-header">Requirements</h5>
+                    <ul id="job-details-requirements-list" class="section-content job-list-items">
+                        <li>Loading requirements...</li>
+                    </ul>
+                </div>
+    
+                    <!-- Nice-to-Have Section -->
+                <div class="job-section">
+                    <h5 class="section-header">Nice-to-Have</h5>
+                        <ul id="job-details-nice-to-have-list" class="section-content job-list-items">
+                            <li>Loading nice-to-have...</li>
+                        </ul>
+                </div>
+    
+                    <!-- Applicants Section (Keep as is) -->
                 <hr>
                 <h3>Applicants</h3>
                 <div id="applicant-list">
-                    Applicant list for the selected job
                     <p>No applicants yet or none selected.</p>
                 </div>
-            </div> -->
-            <div id="job-details-view" class="view">
-                <!-- Job Title and ID -->
-               <h2 id="job-details-title" class="view-title">Job Title Loading...</h2>
-               <p id="job-details-id" class="job-id-display">ID: ---</p>
-   
-                <!-- *** ADD BUTTON BACK HERE *** -->
-                <button id="show-enhance-view-btn" class="btn secondary-btn enhance-button-job-details">
-                    <span class="material-icons" style="font-size: 1.1em; margin-right: 4px;">auto_awesome</span> Enhance with AI
-                </button>
-                <!-- *************************** -->
-
-               <!-- Meta Information Section -->
-               <div class="job-meta-info">
-                   <div class="meta-item">
-                       <span class="material-icons meta-icon">business_center</span>
-                       <span id="job-details-department" class="meta-value">---</span>
-                   </div>
-                   <div class="meta-item">
-                       <span class="material-icons meta-icon">location_on</span>
-                       <span id="job-details-location" class="meta-value">---</span>
-                   </div>
-                   <div class="meta-item">
-                       <span class="material-icons meta-icon">payments</span>
-                       <span id="job-details-salary" class="meta-value">---</span>
-                   </div>
-                    <div class="meta-item">
-                       <span class="material-icons meta-icon">work_history</span>
-                       <span id="job-details-status" class="meta-value">---</span>
-                   </div>
-               </div>
-   
-               <!-- Description Section -->
-               <div class="job-section">
-                   <h5 class="section-header">Description</h5>
-                   <p id="job-details-description" class="section-content">Loading description...</p>
-               </div>
-   
-               <!-- Requirements Section -->
-               <div class="job-section">
-                   <h5 class="section-header">Requirements</h5>
-                   <ul id="job-details-requirements-list" class="section-content job-list-items">
-                       <li>Loading requirements...</li>
-                   </ul>
-               </div>
-   
-                <!-- Nice-to-Have Section -->
-               <div class="job-section">
-                   <h5 class="section-header">Nice-to-Have</h5>
-                    <ul id="job-details-nice-to-have-list" class="section-content job-list-items">
-                        <li>Loading nice-to-have...</li>
-                    </ul>
-               </div>
-   
-                <!-- Applicants Section (Keep as is) -->
-               <hr>
-               <h3>Applicants</h3>
-               <div id="applicant-list">
-                   <p>No applicants yet or none selected.</p>
-               </div>
-           </div>
-            
-            <div id="enhance-job-view" class="view">
-                <button id="back-to-job-from-enhance-btn" class="btn back-btn"><span class="material-icons">arrow_back</span> Back to Job Details</button>
-                <h2>Enhance Job Description: <span id="enhance-job-title-header"></span></h2>
-                <p>Review AI suggestions below. Edit the text in the 'Suggested' boxes or accept the suggestion.</p>
-                <div id="enhancement-fields">
-                    <!-- Fields will be populated by JS -->
-                    <p>Loading suggestions...</p>
-                </div>
-                <div id="enhancement-rationale" class="output-area" style="margin-top: 15px;">
-                    <!-- Loading State Elements (Hidden by default) -->
-                    <div class="loading-indicator" style="display: none;">
-                        <span class="material-icons loading-icon">auto_awesome</span> <!-- Choose an icon -->
-                        <span class="loading-text">Analyzing...</span>
-                    </div>
-                    <!-- Actual Content Wrapper -->
-                    <div class="rationale-content-wrapper">
-                        <strong>AI Rationale:</strong> <span id="rationale-content"></span>
-                    </div>
-                </div>
-                <div style="margin-top: 20px;">
-                    <button id="save-enhanced-job-btn" class="btn primary-btn">Save Enhanced Job</button>
-                    <span id="enhance-status" class="message" style="margin-left: 10px;"></span>
-                </div>
             </div>
-
-            <div id="applicant-details-view" class="view">
-                 <button id="back-to-job-btn" class="btn back-btn"><span class="material-icons">arrow_back</span> Back to Job</button>
-                <h2 id="applicant-name">Applicant Details</h2>
-                <div class="applicant-info">
-                    <p><strong>Email:</strong> <span id="applicant-email"></span></p>
-                    <p><strong>Phone:</strong> <span id="applicant-phone"></span></p>
-                    <p><strong>Resume:</strong> <a id="applicant-resume" href="#" target="_blank">View Resume</a></p>
-                    <p><strong>Cover Letter:</strong></p>
-                    <pre id="applicant-cover-letter" class="output-area"></pre>
-                    <p><strong>Applied On:</strong> <span id="applicant-applied-at"></span></p>
-                 </div>
-
-                <div class="lifecycle-section">
-                    <h3>Application Lifecycle</h3>
-                    <div id="lifecycle-stages" class="stages-container">
-                        <!-- Stages will be rendered here -->
+                
+                <div id="enhance-job-view" class="view">
+                    <button id="back-to-job-from-enhance-btn" class="btn back-btn"><span class="material-icons">arrow_back</span> Back to Job Details</button>
+                    <h2>Enhance Job Description: <span id="enhance-job-title-header"></span></h2>
+                    <p>Review AI suggestions below. Edit the text in the 'Suggested' boxes or accept the suggestion.</p>
+                    <div id="enhancement-fields">
+                        <!-- Fields will be populated by JS -->
+                        <p>Loading suggestions...</p>
                     </div>
-                     <div id="current-stage-details">
-                        <h4>Current Stage: <span id="current-stage-name"></span></h4>
-                        <p><strong>Objectives:</strong> <span id="current-stage-objectives"></span></p>
-                        <p><strong>Assigned To:</strong> <span id="current-stage-assigned"></span></p>
-
-                        <h5>Feedback History for Current Stage:</h5>
-                        <div id="current-stage-feedback-list" class="feedback-list">
-                             <p>No feedback yet for this stage.</p>
-                         </div>
-
-                        <h5>Add Feedback for Current Stage:</h5>
-                        <form id="add-feedback-form">
-                             <input type="hidden" id="feedback-applicant-id">
-                             <input type="hidden" id="feedback-stage-id">
-                             <div class="form-group">
-                                 <label for="feedback-comment">Comment:</label>
-                                 <textarea id="feedback-comment" rows="3" required></textarea>
-                             </div>
-                             <div class="form-group">
-                                 <label for="feedback-rating">Rating (1-5, Optional):</label>
-                                 <input type="number" id="feedback-rating" min="1" max="5">
-                             </div>
-                              <!-- Add input for feedbackBy or get from logged-in user context later -->
-                              <input type="hidden" id="feedback-by" value="recruiter@example.com"> <!-- Placeholder -->
-                             <button type="submit" class="btn secondary-btn">Submit Feedback</button>
-                         </form>
-
-                         <h5>Move to Next Stage / Decision:</h5>
-                         <form id="change-stage-form">
-                              <input type="hidden" id="stage-change-applicant-id">
-                              <div class="form-group">
-                                  <label for="stage-decision">Decision for Current Stage:</label>
-                                  <select id="stage-decision" required>
-                                      <option value="">-- Select --</option>
-                                      <option value="passed">Pass to Next Stage</option>
-                                      <option value="rejected">Reject Applicant</option>
-                                  </select>
-                              </div>
-                              <div id="next-stage-selector" class="form-group" style="display: none;">
-                                 <label for="next-stage-id">Next Stage:</label>
-                                 <select id="next-stage-id">
-                                      <!-- Next stages will be populated here -->
-                                  </select>
-                                  <label for="next-stage-assignee">Assign To:</label>
-                                   <input type="text" id="next-stage-assignee" placeholder="assignee@example.com"> <!-- Needs better selector later -->
-                              </div>
-                               <div class="form-group">
-                                  <label for="overall-feedback">Overall Stage Feedback (Optional):</label>
-                                  <textarea id="overall-feedback" rows="2"></textarea>
-                              </div>
-                              <button type="submit" class="btn primary-btn">Confirm Decision</button>
-                         </form>
+                    <div id="enhancement-rationale" class="output-area" style="margin-top: 15px;">
+                        <!-- Loading State Elements (Hidden by default) -->
+                        <div class="loading-indicator" style="display: none;">
+                            <span class="material-icons loading-icon">auto_awesome</span> <!-- Choose an icon -->
+                            <span class="loading-text">Analyzing...</span>
+                        </div>
+                        <!-- Actual Content Wrapper -->
+                        <div class="rationale-content-wrapper">
+                            <strong>AI Rationale:</strong> <span id="rationale-content"></span>
+                        </div>
+                    </div>
+                    <div style="margin-top: 20px;">
+                        <button id="save-enhanced-job-btn" class="btn primary-btn">Save Enhanced Job</button>
+                        <span id="enhance-status" class="message" style="margin-left: 10px;"></span>
                     </div>
                 </div>
 
-                <div class="ai-chat-section">
-                    <h3>AI Assistant - Candidate Assessment</h3>
-                    <div id="recruiter-chat-history" class="chat-history">
-                        <!-- AI assessment chat messages -->
+                <div id="applicant-details-view" class="view">
+                    <button id="back-to-job-btn" class="btn back-btn"><span class="material-icons">arrow_back</span> Back to Job</button>
+                    <h2 id="applicant-name">Applicant Details</h2>
+                    <div class="applicant-info">
+                        <p><strong>Email:</strong> <span id="applicant-email"></span></p>
+                        <p><strong>Phone:</strong> <span id="applicant-phone"></span></p>
+                        <p><strong>Resume:</strong> <a id="applicant-resume" href="#" target="_blank">View Resume</a></p>
+                        <p><strong>Cover Letter:</strong></p>
+                        <pre id="applicant-cover-letter" class="output-area"></pre>
+                        <p><strong>Applied On:</strong> <span id="applicant-applied-at"></span></p>
                     </div>
-                    <form id="recruiter-chat-form">
-                         <input type="hidden" id="ai-chat-applicant-id">
-                         <input type="hidden" id="ai-chat-job-id">
-                         <input type="text" id="recruiter-chat-input" placeholder="Ask AI about this candidate..." required>
-                         <button type="submit" class="btn primary-btn"><span class="material-icons">send</span></button>
-                    </form>
-                </div>
 
-            </div>
-        </section>
-    </main>
-    <script src="app.js"></script>
-</body>
+                    <div class="lifecycle-section">
+                        <h3>Application Lifecycle</h3>
+                        <div id="lifecycle-stages" class="stages-container">
+                            <!-- Stages will be rendered here -->
+                        </div>
+                        <div id="current-stage-details">
+                            <h4>Current Stage: <span id="current-stage-name"></span></h4>
+                            <p><strong>Objectives:</strong> <span id="current-stage-objectives"></span></p>
+                            <p><strong>Assigned To:</strong> <span id="current-stage-assigned"></span></p>
+
+                            <h5>Feedback History for Current Stage:</h5>
+                            <div id="current-stage-feedback-list" class="feedback-list">
+                                <p>No feedback yet for this stage.</p>
+                            </div>
+
+                            <h5>Add Feedback for Current Stage:</h5>
+                            <form id="add-feedback-form">
+                                <input type="hidden" id="feedback-applicant-id">
+                                <input type="hidden" id="feedback-stage-id">
+                                <div class="form-group">
+                                    <label for="feedback-comment">Comment:</label>
+                                    <textarea id="feedback-comment" rows="3" required></textarea>
+                                </div>
+                                <div class="form-group">
+                                    <label for="feedback-rating">Rating (1-5, Optional):</label>
+                                    <input type="number" id="feedback-rating" min="1" max="5">
+                                </div>
+                                <!-- Add input for feedbackBy or get from logged-in user context later -->
+                                <input type="hidden" id="feedback-by" value="recruiter@example.com"> <!-- Placeholder -->
+                                <button type="submit" class="btn secondary-btn">Submit Feedback</button>
+                            </form>
+
+                            <h5>Move to Next Stage / Decision:</h5>
+                            <form id="change-stage-form">
+                                <input type="hidden" id="stage-change-applicant-id">
+                                <div class="form-group">
+                                    <label for="stage-decision">Decision for Current Stage:</label>
+                                    <select id="stage-decision" required>
+                                        <option value="">-- Select --</option>
+                                        <option value="passed">Pass to Next Stage</option>
+                                        <option value="rejected">Reject Applicant</option>
+                                    </select>
+                                </div>
+                                <div id="next-stage-selector" class="form-group" style="display: none;">
+                                    <label for="next-stage-id">Next Stage:</label>
+                                    <select id="next-stage-id">
+                                        <!-- Next stages will be populated here -->
+                                    </select>
+                                    <label for="next-stage-assignee">Assign To:</label>
+                                    <input type="text" id="next-stage-assignee" placeholder="assignee@example.com"> <!-- Needs better selector later -->
+                                </div>
+                                <div class="form-group">
+                                    <label for="overall-feedback">Overall Stage Feedback (Optional):</label>
+                                    <textarea id="overall-feedback" rows="2"></textarea>
+                                </div>
+                                <button type="submit" class="btn primary-btn">Confirm Decision</button>
+                            </form>
+                        </div>
+                    </div>
+
+                    <div class="ai-chat-section">
+                        <h3>AI Assistant - Candidate Assessment</h3>
+                        <div id="recruiter-chat-history" class="chat-history">
+                            <!-- AI assessment chat messages -->
+                        </div>
+                        <form id="recruiter-chat-form">
+                            <input type="hidden" id="ai-chat-applicant-id">
+                            <input type="hidden" id="ai-chat-job-id">
+                            <input type="text" id="recruiter-chat-input" placeholder="Ask AI about this candidate..." required>
+                            <button type="submit" class="btn primary-btn"><span class="material-icons">send</span></button>
+                        </form>
+                    </div>
+
+                </div>
+            </section>
+        </main>
+        </div>
+        <!-- End of Main App Container -->
+        <script src="app.js"></script>
+    </body>
 </html>
