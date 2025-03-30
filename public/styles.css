@@ -1,4 +1,29 @@
-/* Basic Reset & Body */
+/* --- Google Style Enhancement for Recruitment Agent --- */
+
+/* 1. Base & Variables */
+:root {
+    --google-blue: #4285F4;
+    --google-blue-dark: #357ae8;
+    --google-green: #34A853;
+    --google-green-dark: #2e7d32;
+    --google-red: #EA4335;
+    --google-yellow: #FBBC05;
+    --text-primary: #202124; /* Google's primary text color */
+    --text-secondary: #5f6368; /* Google's secondary text color */
+    --border-color: #dadce0; /* Google's standard border */
+    --background-light: #f8f9fa; /* Slightly off-white */
+    --background-white: #ffffff;
+    --focus-ring-color: #4285F4;
+
+    --font-family-sans-serif: 'Roboto', sans-serif;
+    --base-font-size: 1rem; /* 16px */
+    --small-font-size: 0.875rem; /* 14px */
+    --label-font-size: 0.8125rem; /* 13px */
+    --border-radius: 8px; /* More rounded corners */
+    --card-shadow: 0 1px 2px 0 rgba(60,64,67,.3), 0 1px 3px 1px rgba(60,64,67,.15); /* Subtle shadow */
+    --focus-shadow: 0 0 0 2px var(--background-light), 0 0 0 4px var(--focus-ring-color);
+}
+
 * {
     box-sizing: border-box;
     margin: 0;
@@ -6,119 +31,224 @@
 }
 
 body {
-    font-family: 'Roboto', sans-serif;
-    line-height: 1.6;
-    background-color: #f4f4f4;
-    color: #333;
+    font-family: var(--font-family-sans-serif);
+    line-height: 1.5; /* Slightly reduced for tighter feel */
+    background-color: var(--background-light);
+    color: var(--text-primary);
     display: flex;
     flex-direction: column;
     min-height: 100vh;
+    font-size: var(--base-font-size);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
 }
 
-header {
-    background-color: #4285F4; /* Google Blue */
-    color: #fff;
-    padding: 1rem 2rem;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-
-header h1 {
-    font-weight: 400;
-}
-
-/* Layout */
+/* 2. Layout */
 .container {
     display: flex;
-    flex: 1; /* Take remaining height */
-    max-width: 1600px; /* Max width for larger screens */
-    margin: 1rem auto; /* Center container */
-    width: 95%; /* Responsive width */
-    gap: 1rem; /* Space between sidebar and content */
+    flex: 1;
+    max-width: 1600px;
+    margin: 1.5rem auto; /* Increased top/bottom margin */
+    width: 95%;
+    gap: 1.5rem; /* Increased gap */
 }
 
 .centered-container {
-    max-width: 800px;
-    flex-direction: column; /* Stack elements vertically */
-    align-items: center; /* Center content horizontally */
+    max-width: 700px; /* Slightly narrower for focus */
+    flex-direction: column;
+    align-items: stretch; /* Stretch children full width */
 }
 
 .sidebar {
-    flex: 0 0 280px; /* Fixed width sidebar */
-    background-color: #fff;
-    padding: 1rem;
-    border-radius: 8px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-    height: fit-content; /* Adjust height based on content */
+    flex: 0 0 280px;
+    background-color: var(--background-white);
+    padding: 1rem; /* Keep padding reasonable */
+    border-radius: var(--border-radius);
+    box-shadow: var(--card-shadow);
+    height: fit-content;
+    border: 1px solid var(--border-color); /* Subtle border */
 }
 
 .content {
-    flex: 1; /* Takes remaining space */
-    background-color: #fff;
-    padding: 1.5rem;
-    border-radius: 8px;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    flex: 1;
+    background-color: var(--background-white);
+    padding: 2rem; /* More padding in content area */
+    border-radius: var(--border-radius);
+    box-shadow: var(--card-shadow);
+    border: 1px solid var(--border-color);
 }
 
-/* Buttons */
-.btn {
-    display: inline-block;
-    padding: 0.6rem 1.2rem;
+/* 3. Header */
+header {
+    background-color: var(--background-white); /* White header */
+    color: var(--text-primary);
+    padding: 0.8rem 2rem; /* Slightly less padding */
+    box-shadow: 0 1px 2px 0 rgba(60, 64, 67, 0.1); /* Softer shadow */
+    border-bottom: 1px solid var(--border-color);
+    position: sticky; /* Optional: make header sticky */
+    top: 0;
+    z-index: 10;
+}
+
+header h1 {
+    font-weight: 500; /* Medium weight */
+    font-size: 1.375rem; /* 22px */
+}
+
+/* 4. Typography */
+h2 {
+    font-size: 1.25rem; /* 20px */
+    font-weight: 500;
+    color: var(--text-primary);
+    margin-bottom: 1.5rem;
+}
+
+h3 {
+    font-size: 1.125rem; /* 18px */
+    font-weight: 500;
+    color: var(--text-primary);
+    margin-bottom: 1rem;
+}
+
+h4 {
+    font-size: 1rem; /* 16px */
+    font-weight: 500;
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+}
+
+h5 {
+    font-size: var(--small-font-size); /* 14px */
+    font-weight: 500;
+    color: var(--text-secondary);
+    margin-bottom: 0.5rem;
+    text-transform: uppercase; /* Section sub-headers */
+    letter-spacing: 0.5px;
+}
+
+p {
+    margin-bottom: 1rem;
+    color: var(--text-primary); /* Ensure default text color */
+}
+
+small {
+    font-size: var(--label-font-size); /* 13px */
+    color: var(--text-secondary);
+}
+
+strong {
+    font-weight: 500; /* Medium weight for strong */
+}
+
+a {
+    color: var(--google-blue);
+    text-decoration: none;
+}
+a:hover {
+    text-decoration: underline;
+}
+
+hr {
     border: none;
-    border-radius: 4px;
+    border-top: 1px solid var(--border-color);
+    margin: 1.5rem 0;
+}
+
+/* 5. Buttons */
+.btn {
+    display: inline-flex; /* Use flex for better alignment */
+    align-items: center;
+    justify-content: center;
+    padding: 0.5rem 1rem; /* Adjusted padding */
+    border: 1px solid transparent; /* Base border */
+    border-radius: var(--border-radius);
     cursor: pointer;
-    font-size: 0.95rem;
+    font-size: var(--small-font-size);
+    font-weight: 500;
     text-align: center;
     text-decoration: none;
-    transition: background-color 0.2s ease, box-shadow 0.2s ease;
-    margin: 0.3rem 0.2rem;
-    vertical-align: middle; /* Align icon and text */
+    transition: background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+    margin: 0.25rem; /* Reduced margin */
+    line-height: 1.5; /* Ensure text aligns well */
+    min-height: 36px; /* Minimum height */
+}
+.btn:focus-visible { /* Modern focus indicator */
+    outline: none;
+    box-shadow: var(--focus-shadow);
 }
 
 .primary-btn {
-    background-color: #4285F4;
-    color: #fff;
+    background-color: var(--google-blue);
+    color: var(--background-white);
+    border-color: var(--google-blue);
 }
 .primary-btn:hover {
-    background-color: #357ae8;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    background-color: var(--google-blue-dark);
+    border-color: var(--google-blue-dark);
+    box-shadow: 0 1px 1px 0 rgba(0,0,0,.1);
 }
 
 .secondary-btn {
-    background-color: #f1f1f1;
-    color: #333;
-    border: 1px solid #ddd;
+    background-color: var(--background-white);
+    color: var(--google-blue); /* Blue text */
+    border: 1px solid var(--border-color); /* Standard border */
 }
 .secondary-btn:hover {
-    background-color: #e0e0e0;
-    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    background-color: rgba(66, 133, 244, 0.04); /* Very light blue wash */
+    border-color: var(--border-color); /* Keep border consistent */
+    box-shadow: none;
 }
 
 .back-btn {
     background: none;
     border: none;
-    color: #4285F4;
+    color: var(--text-secondary); /* Use secondary text color */
     padding: 0.2rem;
-    display: flex;
+    display: inline-flex; /* Use flex */
     align-items: center;
-    margin-bottom: 1rem;
+    margin-bottom: 1.5rem; /* More space below */
+    font-size: var(--small-font-size);
+}
+.back-btn .material-icons {
+    margin-right: 4px; /* Space between icon and text */
 }
 .back-btn:hover {
-    text-decoration: underline;
+    text-decoration: none;
+    color: var(--text-primary); /* Darken on hover */
 }
 
-/* Forms */
+/* Applied suggestion button state */
+.accept-suggestion-btn.suggestion-applied-btn {
+    background-color: rgba(52, 168, 83, 0.1); /* Light green wash */
+    border-color: var(--google-green);
+    color: var(--google-green-dark);
+    font-weight: 500;
+}
+.accept-suggestion-btn.suggestion-applied-btn .checkmark-icon {
+    display: inline-block;
+    color: var(--google-green);
+}
+.accept-suggestion-btn .checkmark-icon {
+    display: none;
+    font-size: 1.1em; /* Make icon slightly larger */
+    vertical-align: text-bottom; /* Align better */
+    margin-left: 6px;
+}
+
+
+/* 6. Forms */
 .form-group {
-    margin-bottom: 1rem;
+    margin-bottom: 1.25rem; /* More space */
 }
-
 .form-group label {
     display: block;
-    margin-bottom: 0.4rem;
+    margin-bottom: 0.5rem;
     font-weight: 500;
-    font-size: 0.9rem;
-    color: #555;
+    font-size: var(--label-font-size);
+    color: var(--text-secondary); /* Lighter label color */
+    text-transform: uppercase; /* Uppercase labels */
+    letter-spacing: 0.5px;
 }
-
 .form-group input[type="text"],
 .form-group input[type="email"],
 .form-group input[type="tel"],
@@ -126,268 +256,428 @@ header h1 {
 .form-group input[type="number"],
 .form-group select,
 .form-group textarea {
+    display: block;
     width: 100%;
-    padding: 0.6rem;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    font-size: 1rem;
+    padding: 0.6rem 0.8rem; /* Adjust padding */
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    font-size: var(--small-font-size); /* Slightly smaller form font */
+    background-color: var(--background-white);
+    color: var(--text-primary);
+    line-height: 1.5;
+    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
 }
-
+.form-group input::placeholder,
+.form-group textarea::placeholder {
+    color: #a0a0a0; /* Lighter placeholder */
+}
 .form-group textarea {
     resize: vertical;
+    min-height: 80px;
 }
-.form-group small {
-    font-size: 0.8rem;
-    color: #666;
-    margin-top: 0.2rem;
-}
-
-
-/* Views */
-.view {
-    display: none; /* Hide views by default */
-}
-.view.active {
-    display: block; /* Show active view */
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-color: var(--google-blue);
+    box-shadow: 0 0 0 1px var(--google-blue); /* Subtle focus ring */
 }
 
-/* Job List */
-#job-list .job-item {
-    padding: 0.7rem;
-    border-bottom: 1px solid #eee;
+/* 7. Lists (Jobs, Applicants) */
+#job-list .job-item,
+#applicant-list .applicant-item {
+    padding: 0.8rem 1rem; /* Consistent padding */
+    border: 1px solid transparent; /* Add border for consistency */
+    border-bottom: 1px solid var(--border-color);
     cursor: pointer;
-    border-radius: 4px;
+    border-radius: 0; /* Remove radius for list items */
+    transition: background-color 0.15s ease;
+    display: flex; /* Use flex for applicant list alignment */
+    justify-content: space-between;
+    align-items: center;
 }
-#job-list .job-item:hover {
-    background-color: #f9f9f9;
+#job-list .job-item:last-child,
+#applicant-list .applicant-item:last-child {
+    border-bottom: 1px solid transparent; /* Remove bottom border on last */
+}
+#job-list .job-item:hover,
+#applicant-list .applicant-item:hover {
+    background-color: var(--background-light);
 }
 #job-list .job-item.selected {
-    background-color: #e8f0fe; /* Light blue for selection */
+    background-color: rgba(66, 133, 244, 0.08); /* Lighter blue wash */
+    font-weight: inherit; /* Don't make text bold */
+    border-left: 3px solid var(--google-blue); /* Add left indicator */
+    padding-left: calc(1rem - 3px); /* Adjust padding for border */
+}
+#job-list .job-item h4 { /* Job title */
+    font-size: var(--small-font-size);
     font-weight: 500;
+    color: var(--text-primary);
+    margin-bottom: 0.1rem;
 }
-#job-list .job-item h4 {
-    margin-bottom: 0.2rem;
+#job-list .job-item p { /* Job location/status */
+    font-size: var(--label-font-size);
+    color: var(--text-secondary);
+    margin-bottom: 0;
+}
+#applicant-list .applicant-item span:first-child { /* Applicant name/email */
+    font-size: var(--small-font-size);
+    color: var(--text-primary);
+}
+#applicant-list .applicant-item .stage { /* Stage chip */
     font-weight: 500;
-}
-#job-list .job-item p {
-    font-size: 0.85rem;
-    color: #555;
+    padding: 0.2rem 0.6rem;
+    border-radius: 16px; /* Pill shape */
+    font-size: 0.75rem; /* 12px */
+    background-color: #e8eaed; /* Light gray chip */
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
-
-/* Applicant List */
-#applicant-list .applicant-item {
-     display: flex;
-     justify-content: space-between;
-     align-items: center;
-     padding: 0.8rem 0.5rem;
-     border-bottom: 1px solid #eee;
-     cursor: pointer;
-     border-radius: 4px;
-}
-#applicant-list .applicant-item:hover {
-    background-color: #f9f9f9;
-}
-#applicant-list .applicant-item span {
-     font-size: 0.9rem;
-}
-#applicant-list .applicant-item .stage {
-     font-weight: 500;
-     padding: 0.2rem 0.5rem;
-     border-radius: 10px;
-     font-size: 0.8rem;
-     background-color: #e0e0e0; /* Default stage color */
-}
-/* Add specific colors for stages later if needed */
-
-
-/* Applicant Details */
+/* 8. Details & Output Areas */
 .applicant-info, .lifecycle-section, .ai-chat-section {
-    margin-top: 1.5rem;
-    border-top: 1px solid #eee;
-    padding-top: 1.5rem;
+    margin-top: 2rem; /* Increased spacing */
+    border-top: 1px solid var(--border-color);
+    padding-top: 2rem;
 }
-
 .applicant-info p {
-    margin-bottom: 0.5rem;
+    font-size: var(--small-font-size);
+    margin-bottom: 0.6rem;
+    color: var(--text-secondary); /* Use secondary for labels */
 }
 .applicant-info strong {
-    margin-right: 5px;
+    color: var(--text-primary); /* Make value primary */
+    margin-right: 6px;
 }
-.output-area {
-    background-color: #f8f8f8;
-    border: 1px solid #eee;
-    padding: 0.8rem;
-    border-radius: 4px;
-    white-space: pre-wrap; /* Wrap long lines */
+.applicant-info span {
+     color: var(--text-primary); /* Make value primary */
+}
+.output-area,
+#job-details-full-desc {
+    background-color: var(--background-light);
+    border: 1px solid var(--border-color);
+    padding: 1rem; /* More padding */
+    border-radius: var(--border-radius);
+    white-space: pre-wrap;
     word-wrap: break-word;
-    font-family: monospace;
-    font-size: 0.9rem;
+    font-family: 'Roboto Mono', monospace; /* Consider monospace */
+    font-size: var(--small-font-size);
     margin-top: 0.5rem;
-    max-height: 200px; /* Limit height */
+    max-height: 250px;
     overflow-y: auto;
+    line-height: 1.6;
+    color: var(--text-primary);
 }
 
-/* Lifecycle Stages */
-.stages-container {
-    display: flex;
-    flex-wrap: wrap; /* Allow wrapping on smaller screens */
-    margin-bottom: 1.5rem;
-    position: relative; /* For connecting lines */
-    padding: 10px 0;
-}
+/* 9. Lifecycle Stages */
+/* (Existing stage styles are okay, maybe minor color tweaks if desired) */
 
-.stage-step {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-    flex: 1; /* Distribute space */
-    position: relative;
-    padding: 0 5px; /* Spacing */
-    min-width: 100px; /* Minimum width */
-}
-
-.stage-dot {
-    width: 20px;
-    height: 20px;
-    border-radius: 50%;
-    background-color: #ccc; /* Default inactive */
-    border: 2px solid #ccc;
-    margin-bottom: 5px;
-    z-index: 1;
-}
-.stage-step.completed .stage-dot {
-    background-color: #4CAF50; /* Green */
-    border-color: #4CAF50;
-}
-.stage-step.rejected .stage-dot {
-    background-color: #f44336; /* Red */
-    border-color: #f44336;
-}
-.stage-step.current .stage-dot {
-    background-color: #4285F4; /* Blue */
-    border-color: #4285F4;
-    transform: scale(1.2);
-}
-
-.stage-name {
-    font-size: 0.8rem;
-    color: #666;
-}
-.stage-step.current .stage-name {
-    font-weight: bold;
-    color: #333;
-}
-
-/* Connecting Lines (Basic) */
-.stages-container::before {
-    content: '';
-    position: absolute;
-    top: 20px; /* Align with center of dots */
-    left: 10%; /* Start after first dot */
-    right: 10%; /* End before last dot */
-    height: 2px;
-    background-color: #ccc;
-    z-index: 0;
-}
-.stage-step.completed + .stage-step::before { /* Connector between completed steps */
-     content: '';
-     position: absolute;
-     top: 20px;
-     left: -50%; /* Connect to previous */
-     right: 50%;
-     height: 2px;
-     background-color: #4CAF50; /* Green line */
-     z-index: 0;
-}
-
-
-/* Feedback List */
+/* 10. Feedback */
 .feedback-list .feedback-item {
-    border: 1px solid #eee;
-    padding: 0.8rem;
-    margin-bottom: 0.5rem;
-    border-radius: 4px;
-    background-color: #fcfcfc;
+    border: 1px solid var(--border-color);
+    padding: 0.8rem 1rem;
+    margin-bottom: 0.75rem;
+    border-radius: var(--border-radius);
+    background-color: var(--background-white); /* White background */
+    font-size: var(--small-font-size);
+}
+.feedback-list .feedback-item p {
+    margin-bottom: 0.4rem;
 }
 .feedback-list .feedback-item strong {
-    font-size: 0.85rem;
-    color: #555;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    margin-right: 4px;
 }
 
-/* Chat Interface */
+/* 11. Chat Interface */
 .chat-history {
     height: 250px;
-    border: 1px solid #eee;
+    border: 1px solid var(--border-color);
     overflow-y: auto;
     padding: 1rem;
     margin-bottom: 1rem;
-    background-color: #f9f9f9;
-    border-radius: 4px;
+    background-color: var(--background-white); /* White background */
+    border-radius: var(--border-radius);
 }
-
 .chat-message {
     margin-bottom: 0.8rem;
-    padding: 0.5rem 0.8rem;
-    border-radius: 8px;
-    max-width: 80%;
+    padding: 0.6rem 1rem; /* Adjust padding */
+    border-radius: 18px; /* More rounded bubbles */
+    max-width: 85%;
     word-wrap: break-word;
+    font-size: var(--small-font-size);
+    line-height: 1.4;
 }
-
 .chat-message.user {
-    background-color: #e1f5fe; /* Light blue */
+    background-color: #e1f0ff; /* Lighter Google blue */
+    color: var(--text-primary);
     margin-left: auto;
-    border-bottom-right-radius: 0;
+    border-bottom-right-radius: 4px; /* Slightly flatten corner */
 }
-
 .chat-message.model {
-    background-color: #f1f1f1; /* Light grey */
+    background-color: #f1f3f4; /* Google light gray */
+    color: var(--text-primary);
     margin-right: auto;
-    border-bottom-left-radius: 0;
+    border-bottom-left-radius: 4px;
 }
 .chat-message strong { /* Role indicator */
     display: block;
     font-size: 0.75rem;
-    margin-bottom: 0.2rem;
-    color: #555;
+    margin-bottom: 0.3rem;
+    color: var(--text-secondary);
+    font-weight: 500;
 }
-
-
 #recruiter-chat-form, #candidate-chat-form {
     display: flex;
     gap: 0.5rem;
+    margin-top: 1rem; /* Add space above input */
 }
-
 #recruiter-chat-form input, #candidate-chat-form input {
-    flex-grow: 1; /* Input takes available space */
+    flex-grow: 1;
+    /* Inherit form input styles */
+}
+#recruiter-chat-form .btn, #candidate-chat-form .btn {
+    padding: 0.5rem 0.8rem; /* Slightly smaller padding for icon button */
+    min-width: 40px; /* Ensure minimum width */
+}
+#recruiter-chat-form .material-icons, #candidate-chat-form .material-icons {
+    font-size: 1.25rem; /* Adjust icon size */
 }
 
-/* Utility */
-hr {
-    border: none;
-    border-top: 1px solid #eee;
-    margin: 1.5rem 0;
+
+/* 12. Enhancement View */
+#enhance-job-view h2 span {
+    font-weight: 400; /* Lighter weight for job title */
+    font-size: 1.1rem;
+    color: var(--text-secondary);
 }
+.enhancement-field {
+    display: flex; /* Switch to Flexbox for simpler alignment */
+    gap: 1.5rem; /* Increase gap */
+    margin-bottom: 1.5rem;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 1.5rem;
+}
+.enhancement-field > div { /* Target direct children: original, suggested, actions */
+    flex: 1; /* Let them share space */
+}
+.enhancement-field .actions {
+    flex: 0 0 120px; /* Fixed width for actions */
+    display: flex;
+    flex-direction: column;
+    align-items: center; /* Center button */
+    justify-content: center; /* Center vertically */
+}
+.enhancement-field h5 { /* Remove grid span */
+    margin-bottom: 8px;
+    font-size: 1rem;
+    color: #333;
+}
+.enhancement-field .original-content {
+    padding: 1rem;
+    border: 1px solid var(--border-color);
+    background-color: var(--background-light); /* Slightly off-white */
+    border-radius: var(--border-radius);
+    font-size: var(--small-font-size);
+    min-height: 60px;
+}
+.enhancement-field .original-content strong,
+.enhancement-field .suggested-content strong { /* Style labels similarly */
+   display: block;
+   font-size: var(--label-font-size);
+   color: var(--text-secondary);
+   font-weight: 500;
+   margin-bottom: 0.5rem;
+   text-transform: uppercase;
+   letter-spacing: 0.5px;
+}
+.enhancement-field .original-content pre {
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    font-family: inherit;
+    margin: 0;
+    padding: 0;
+    line-height: 1.6;
+    color: var(--text-primary); /* Ensure text color */
+}
+
+/* --- Suggested/Editable Content Box --- */
+.enhancement-field .suggested-content {
+    padding: 1rem;
+    /* Option 1: Subtle border (like other inputs) */
+    /* border: 1px solid var(--border-color); */
+    /* Option 2: Slightly different background (subtle) */
+    background-color: var(--background-white); /* Or keep white if preferred */
+    border: 1px solid transparent; /* Use transparent border to maintain layout space */
+    border-radius: var(--border-radius);
+    font-size: var(--small-font-size);
+    min-height: 60px;
+    position: relative; /* Needed if using absolute positioned icons later */
+}
+
+/* Style for the actual input/textarea within the suggested box */
+.enhancement-field .suggested-content textarea,
+.enhancement-field .suggested-content input[type="text"] {
+   display: block; /* Ensure it takes block layout */
+   width: 100%;
+   min-height: 60px; /* Match original */
+   /* Make it visually blend in by default */
+   border: 1px solid var(--border-color); /* STANDARD subtle border */
+   /* OR use border: none; background: transparent; if parent has background */
+   background-color: var(--background-white); /* Ensure white background */
+   padding: 8px; /* Keep padding */
+   font-size: inherit; /* Inherit size */
+   color: var(--text-primary); /* Ensure text color */
+   resize: vertical;
+   border-radius: 4px; /* Slight rounding inside */
+   line-height: 1.6;
+   margin-top: 0;
+   /* Define transition for focus and highlight */
+   transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out, background-color 0.2s ease-in-out;
+}
+
+/* --- FOCUS STATE for Editable Field --- */
+.enhancement-field .suggested-content textarea:focus,
+.enhancement-field .suggested-content input[type="text"]:focus {
+   outline: none; /* Remove default browser outline */
+   border-color: var(--google-blue); /* Google blue border on focus */
+   box-shadow: 0 0 0 1px var(--google-blue); /* Optional subtle blue glow */
+   background-color: var(--background-white); /* Ensure background stays white */
+}
+
+/* --- APPLIED SUGGESTION Highlight State --- */
+/* Selector remains specific */
+.suggested-content > textarea.suggestion-applied-highlight,
+.suggested-content > input[type="text"].suggestion-applied-highlight {
+   border-color: var(--google-green); /* Google Green border */
+   box-shadow: 0 0 0 1px var(--google-green); /* Green focus ring style */
+   /* Background could change slightly too if desired */
+   /* background-color: #e6f4ea; */
+}
+
+/* --- Action Button Styles (Keep as they were, ensure applied state is defined) --- */
+.enhancement-field .actions { /* Adjust alignment if needed */
+   display: flex;
+   flex-direction: column;
+   justify-content: center; /* Center button vertically */
+   align-items: center;
+}
+/* ... (keep existing .actions .btn styles) ... */
+
+/* Applied suggestion button state */
+.enhancement-field .actions .accept-suggestion-btn.suggestion-applied-btn {
+   background-color: rgba(52, 168, 83, 0.1);
+   border-color: var(--google-green);
+   color: var(--google-green-dark);
+   font-weight: 500;
+   /* Remove transition if added !important previously */
+   /* transition: none; */
+}
+.enhancement-field .actions .accept-suggestion-btn.suggestion-applied-btn .checkmark-icon {
+   display: inline-block;
+   color: var(--google-green);
+}
+.enhancement-field .actions .accept-suggestion-btn .checkmark-icon {
+   display: none;
+   font-size: 1.1em;
+   vertical-align: text-bottom;
+   margin-left: 6px;
+}
+
+/* Styling for the loading state container */
+#enhancement-rationale.loading .loading-indicator {
+    display: flex; /* Use flex to show and align items */
+    align-items: center;
+    justify-content: center; /* Center the items */
+    padding: 1rem 0; /* Add some vertical padding */
+    min-height: 40px; /* Ensure minimum height */
+    text-align: center;
+    color: var(--text-secondary); /* Use secondary text color */
+    font-style: italic;
+}
+
+/* Hide the actual content when the parent is loading */
+#enhancement-rationale.loading .rationale-content-wrapper {
+    display: none;
+}
+
+/* Style the loading icon */
+#enhancement-rationale .loading-icon {
+    font-size: 1.3em; /* Make icon slightly larger */
+    margin-right: 10px;
+    color: var(--google-blue); /* Use accent color */
+    /* Animation */
+    animation: pulse-icon 1.8s infinite ease-in-out;
+}
+
+/* Style the loading text */
+#enhancement-rationale .loading-text {
+    font-weight: 500; /* Medium weight */
+    font-style: normal; /* Override italic from container if needed */
+}
+
+/* Keyframes for the icon animation */
+@keyframes pulse-icon {
+    0% {
+        transform: scale(1);
+        opacity: 0.6;
+    }
+    50% {
+        transform: scale(1.2);
+        opacity: 1;
+    }
+    100% {
+        transform: scale(1);
+        opacity: 0.6;
+    }
+}
+
+/* (Optional: Add a subtle background pattern/gradient to the rationale box when loading) */
+
+#enhancement-rationale.loading {
+    background-image: linear-gradient(45deg, #f8f9fa 25%, transparent 25%), linear-gradient(-45deg, #f8f9fa 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #f8f9fa 75%), linear-gradient(-45deg, transparent 75%, #f8f9fa 75%);
+    background-size: 20px 20px;
+    animation: loading-background-anim 1s infinite linear;
+}
+
+@keyframes loading-background-anim {
+    0% { background-position: 0 0; }
+    100% { background-position: 20px 0; }
+}
+/* --- End of Enhancement View --- */
+
+/* 13. Utility & Messages */
 .message {
     margin-top: 1rem;
-    padding: 0.5rem;
-    border-radius: 4px;
-    font-size: 0.9rem;
+    padding: 0.8rem 1rem; /* Adjust padding */
+    border-radius: var(--border-radius);
+    font-size: var(--small-font-size);
+    border: 1px solid transparent;
 }
 .message.success {
-    background-color: #d4edda;
-    color: #155724;
-    border: 1px solid #c3e6cb;
+    background-color: #e6f4ea; /* Lighter green */
+    color: var(--google-green-dark);
+    border-color: #ceead6;
 }
 .message.error {
-     background-color: #f8d7da;
-     color: #721c24;
-     border: 1px solid #f5c6cb;
+     background-color: #fce8e6; /* Lighter red */
+     color: #a50e0e; /* Darker red */
+     border-color: #fcc6c3;
+}
+.material-icons {
+    font-size: inherit;
+    vertical-align: text-bottom; /* Better vertical alignment */
+    line-height: 1; /* Prevent extra line height */
+}
+/* Hide all views by default */
+.view {
+    display: none;
 }
 
-/* Material Icons */
-.material-icons {
-    font-size: inherit; /* Inherit size from parent */
-    vertical-align: middle;
+/* Show the view that has the 'active' class */
+.view.active {
+    display: block; /* Or 'flex', 'grid' if the view's internal layout needs it */
 }

@@ -74,12 +74,38 @@
             <div id="job-details-view" class="view">
                 <h2 id="job-details-title">Job Details</h2>
                 <p><strong id="job-details-id"></strong></p>
-                 <pre id="job-details-full-desc" class="output-area"></pre> <!-- To show full JD -->
-                 <hr>
+                <button id="show-enhance-view-btn" class="btn secondary-btn" style="float: right;">Enhance with AI</button> <!-- Add this button -->
+                <pre id="job-details-full-desc" class="output-area"></pre> <!-- To show full JD -->
+                <hr>
                 <h3>Applicants</h3>
                 <div id="applicant-list">
                     <!-- Applicant list for the selected job -->
                     <p>No applicants yet or none selected.</p>
+                </div>
+            </div>
+            
+            <div id="enhance-job-view" class="view">
+                <button id="back-to-job-from-enhance-btn" class="btn back-btn"><span class="material-icons">arrow_back</span> Back to Job Details</button>
+                <h2>Enhance Job Description: <span id="enhance-job-title-header"></span></h2>
+                <p>Review AI suggestions below. Edit the text in the 'Suggested' boxes or accept the suggestion.</p>
+                <div id="enhancement-fields">
+                    <!-- Fields will be populated by JS -->
+                    <p>Loading suggestions...</p>
+                </div>
+                <div id="enhancement-rationale" class="output-area" style="margin-top: 15px;">
+                    <!-- Loading State Elements (Hidden by default) -->
+                    <div class="loading-indicator" style="display: none;">
+                        <span class="material-icons loading-icon">auto_awesome</span> <!-- Choose an icon -->
+                        <span class="loading-text">Analyzing...</span>
+                    </div>
+                    <!-- Actual Content Wrapper -->
+                    <div class="rationale-content-wrapper">
+                        <strong>AI Rationale:</strong> <span id="rationale-content"></span>
+                    </div>
+                </div>
+                <div style="margin-top: 20px;">
+                    <button id="save-enhanced-job-btn" class="btn primary-btn">Save Enhanced Job</button>
+                    <span id="enhance-status" class="message" style="margin-left: 10px;"></span>
                 </div>
             </div>
 

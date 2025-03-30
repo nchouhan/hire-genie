@@ -92,6 +92,47 @@ router.post('/jobs/:jobId/apply', (req, res) => {
     }
 });
 
+router.put('/jobs/:jobId', async (req, res) => {
+    try {
+        const jobId = req.params.jobId;
+        const existingJob = dataStore.getJob(jobId);
+
+        if (!existingJob) {
+            return res.status(404).json({ message: 'Job not found' });
+        }
+
+        // Get updated data from request body
+        const updatedData = req.body;
+
+        // Validate required fields haven't been cleared (optional but good)
+        if (!updatedData.title || !updatedData.description) {
+             return res.status(400).json({ message: 'Title and description cannot be empty.' });
+        }
+        // Create a new updated Job object or update properties directly
+        // It's often safer to merge properties onto the existing object
+        const updatedJob = {
+            ...existingJob, // Keep existing properties like id, createdAt, applicants etc.
+            title: updatedData.title,
+            department: updatedData.department,
+            location: updatedData.location,
+            description: updatedData.description,
+            requirements: updatedData.requirements, // Ensure format is consistent (array or string)
+            niceToHave: updatedData.niceToHave,
+            salaryRange: updatedData.salaryRange,
+            // You might want to add an 'updatedAt' timestamp here
+       };
+
+
+       dataStore.updateJob(updatedJob); // Use the update function
+
+       res.json(updatedJob); // Send back the updated job
+
+   } catch (error) {
+        console.error(`Error updating job ${req.params.jobId}:`, error);
+        res.status(500).json({ message: 'Failed to update job' });
+   }
+});
+
  router.get('/jobs/:jobId/applicants', (req, res) => {
     const applicants = dataStore.getApplicantsForJob(req.params.jobId);
     res.json(applicants);
@@ -159,7 +200,7 @@ router.put('/applicants/:applicantId/stage', (req, res) => {
         res.status(500).json({ message: 'Failed to update stage' });
     }
 });
-
+// --- Feedback Routes ---
 router.post('/applicants/:applicantId/feedback', (req, res) => {
      try {
          const applicant = dataStore.getApplicant(req.params.applicantId);
@@ -200,7 +241,7 @@ router.post('/ai/enhance-jd', async (req, res) => {
         res.status(500).json({ message: 'Failed to enhance job description via AI' });
     }
 });
-
+// --- AI Candidate Assessment Routes ---
 router.post('/ai/assess-candidate', async (req, res) => {
      try {
         const { jobId, applicantId, question } = req.body;
@@ -217,7 +258,7 @@ router.post('/ai/assess-candidate', async (req, res) => {
         res.status(500).json({ message: 'Failed to assess candidate via AI' });
     }
 });
-
+// --- AI Candidate Chat Routes ---
  router.post('/ai/candidate-chat', async (req, res) => {
     try {
         const { applicantId, message } = req.body;
@@ -249,6 +290,30 @@ router.post('/ai/assess-candidate', async (req, res) => {
 
     } catch (error) {
         res.status(500).json({ message: 'Failed to process candidate chat message' });
+    }
+});
+// --- AI Job Description Enhancement Routes ---
+router.post('/ai/suggest-jd-enhancements/:jobId', async (req, res) => {
+    try {
+        const jobId = req.params.jobId;
+        const job = dataStore.getJob(jobId);
+
+        if (!job) {
+            return res.status(404).json({ message: 'Job not found' });
+        }
+
+        const suggestions = await geminiService.getJobDescriptionSuggestions(job);
+
+        if (suggestions.error) {
+             // Send back a server error if AI failed
+            return res.status(500).json({ message: suggestions.error, details: suggestions.details });
+        }
+
+        res.json(suggestions); // Send the structured JSON suggestions back
+
+    } catch (error) {
+         console.error(`Error suggesting enhancements for job ${req.params.jobId}:`, error);
+         res.status(500).json({ message: 'Failed to get enhancement suggestions' });
     }
 });
 

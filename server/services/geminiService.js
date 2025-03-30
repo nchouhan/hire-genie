@@ -142,9 +142,61 @@ async function assessCandidate(jobData, applicantData, question) {
      // Pass existing history to maintain conversation context
     return await callGeminiAPI(prompt, chatContext);
 }
+async function getJobDescriptionSuggestions(jobData) {
+    // Construct a prompt asking for structured JSON output
+    const prompt = `
+        You are an expert recruitment copywriter AI. Analyze the following job description details and provide suggestions for improvement for specific fields.
+        Return your suggestions ONLY as a valid JSON object. Do not include any introductory text or markdown formatting before or after the JSON.
+        The JSON object should have keys corresponding to the fields you are suggesting changes for (e.g., "suggestedTitle", "suggestedDescription", "suggestedRequirements").
+        For each suggested field, provide the improved text.
+        Also include a "suggestionsRationale" field explaining briefly why you made the suggestions (e.g., improved clarity, added keywords, stronger call to action).
+        If a field is already good or you have no suggestion, you can omit it from the JSON response or provide the original text.
+
+        Current Job Data:
+        Title: ${jobData.title || ''}
+        Department: ${jobData.department || ''}
+        Location: ${jobData.location || ''}
+        Description: ${jobData.description || ''}
+        Requirements: ${jobData.requirements || ''} // Assuming string or simple array for now
+        Nice-to-Have: ${jobData.niceToHave || ''}
+
+        Generate the JSON suggestions object below:
+    `;
+
+    try {
+        const rawResponse = await callGeminiAPI(prompt); // Use the existing helper
+
+        // Attempt to parse the response as JSON
+        console.log("Raw Gemini Suggestion Response:", rawResponse);
+        let cleanedResponse = rawResponse.trim(); // Remove leading/trailing whitespace
+
+        // Check for and remove ```json ... ``` markdown fences
+        if (cleanedResponse.startsWith('```json')) {
+            cleanedResponse = cleanedResponse.substring(7); // Remove ```json\n
+        }
+        if (cleanedResponse.endsWith('```')) {
+            cleanedResponse = cleanedResponse.substring(0, cleanedResponse.length - 3);
+        }
+
+        // Trim again just in case there was extra whitespace after removal
+        cleanedResponse = cleanedResponse.trim();
+
+        console.log("Cleaned Gemini Suggestion Response:", cleanedResponse); // Log the cleaned version
+        // Attempt to parse the cleaned response as JSON
+        let suggestions = JSON.parse(cleanedResponse); // This might fail if Gemini didn't return valid JSON
+        return suggestions;
+
+    } catch (error) {
+        console.error("Error getting or parsing job description suggestions:", error);
+         // Return an error structure or throw, depending on how you want to handle it
+         return { error: "Failed to get valid suggestions from AI.", details: error.message };
+    }
+}
 
 module.exports = {
     enhanceJobDescription,
     assessCandidate,
-    candidateChat
+    candidateChat,
+    getJobDescriptionSuggestions
+    // Add more functions as needed
 };
