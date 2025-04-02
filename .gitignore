@@ -34,6 +34,9 @@ Thumbs.db
 server/data/
 !server/data/.gitkeep
 
+server/upload/
+!server/upload/.gitkeep
+
 # Dependency directories
 bower_components/
 jspm_packages/
