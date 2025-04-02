@@ -3,88 +3,135 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Job Application</title> <!-- Title will be updated by JS -->
-    <link rel="stylesheet" href="styles.css">
-     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
-     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <title>Talenta AI Agent - Apply</title> <!-- More specific title -->
+    <link rel="stylesheet" href="/styles.css"> <!-- Use root-relative -->
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 </head>
-<body>
+<body class="dark-theme candidate-page"> <!-- Add theme class -->
     <header>
-        <h1 id="page-title">Job Application</h1>
+        <h1 class="animated-gradient-header" style="font-size: 1.5rem;">Talenta AI Agent</h1>
     </header>
 
     <main class="container centered-container">
 
-        <!-- Application Form View -->
-        <div id="apply-view" class="view" style="display: none;">
-            <h2 id="apply-job-title">Applying for...</h2>
-            <form id="application-form">
-                <input type="hidden" id="apply-job-id">
-                <div class="form-group">
-                    <label for="applicant-name">Full Name:</label>
-                    <input type="text" id="applicant-name" required>
+        <!-- Application Submission View (Starts Active) -->
+        <div id="submit-view" class="view submit-card active"> <!-- Start active -->
+            <h2 id="submit-job-title">Apply for Loading...</h2>
+            <p class="subtle-text">Provide your resume or links for our AI to analyze.</p>
+            <form id="applicant-submission-form" enctype="multipart/form-data">
+                <input type="hidden" id="submit-job-id" name="jobId"> <!-- Ensure name="jobId" -->
+                <div class="form-group upload-area" id="upload-drop-zone">
+                    <label for="resume-file-input">Upload Resume (PDF, DOCX, TXT):</label>
+                     <div class="drop-indicator">
+                        <span class="material-icons upload-icon">cloud_upload</span>
+                        <p>Drag & drop file here or click to browse</p>
+                    </div>
+                    <input type="file" id="resume-file-input" name="resumeFile" accept=".pdf,.doc,.docx,.txt" style="display: none;">
+                    <p id="file-name-display" class="file-name"></p>
                 </div>
+                <p class="or-divider"><span>OR Provide Links</span></p>
                 <div class="form-group">
-                    <label for="applicant-email">Email:</label>
-                    <input type="email" id="applicant-email" required>
-                </div>
-                <div class="form-group">
-                    <label for="applicant-phone">Phone:</label>
-                    <input type="tel" id="applicant-phone" required>
-                </div>
-                <div class="form-group">
-                    <label for="applicant-resume-link">Resume Link (e.g., LinkedIn, Google Drive):</label>
-                    <input type="url" id="applicant-resume-link" required placeholder="https://...">
-                     <small>Please ensure the link is publicly accessible.</small>
+                    <label for="linkedin-url">LinkedIn Profile URL:</label>
+                    <input type="url" id="linkedin-url" name="linkedinUrl" placeholder="https://linkedin.com/in/yourprofile">
                 </div>
                  <div class="form-group">
-                    <label for="applicant-cover-letter">Cover Letter (Optional):</label>
-                    <textarea id="applicant-cover-letter" rows="5"></textarea>
+                    <label for="github-url">GitHub Profile URL:</label>
+                    <input type="url" id="github-url" name="githubUrl" placeholder="https://github.com/yourusername">
                 </div>
-                <button type="submit" class="btn primary-btn">Submit Application</button>
-                <p id="apply-message" class="message"></p>
+                 <div class="form-group">
+                    <label for="portfolio-url">Portfolio URL:</label>
+                    <input type="url" id="portfolio-url" name="portfolioUrl" placeholder="https://yourportfolio.com">
+                </div>
+                <button type="submit" id="analyze-resume-btn" class="btn primary-btn full-width-btn">
+                    <span class="material-icons" style="margin-right: 5px;">psychology</span> Analyze Resume & Links
+                </button>
+                <p id="submit-message" class="message"></p>
             </form>
         </div>
 
-        <!-- Candidate Portal View -->
-         <div id="portal-view" class="view" style="display: none;">
-             <h2 id="portal-welcome">Welcome, <span id="portal-applicant-name"></span>!</h2>
-             <p>You applied for the position: <strong id="portal-job-title"></strong></p>
-             <p>Your current application status: <strong id="portal-current-stage"></strong></p>
+        <!-- === NEW: Parsing View === -->
+        <div id="parsing-view" class="view parsing-container" style="display: none;">
+             <div class="parsing-content">
+                <div class="parsing-animation">
+                    <!-- Simple spinner or more complex animation -->
+                     <div class="splash-loader" style="width: 50px; height: 50px; border-width: 4px;"></div>
+                </div>
+                <h3 class="animated-gradient-header" style="font-size: 1.5rem; margin-bottom: 1rem;">Talenta AI Agent is Processing...</h3>
+                <p id="parsing-status-text" class="parsing-status">Extracting information...</p>
+            </div>
+        </div>
+        <!-- === END: Parsing View === -->
 
-             <div class="feedback-section">
-                 <h3>Feedback Received:</h3>
-                  <div id="portal-feedback-list" class="feedback-list">
-                       <p>No feedback shared yet.</p>
-                       <!-- Feedback will be loaded here -->
-                  </div>
-             </div>
+        <!-- === NEW: Review & Edit View === -->
+        <div id="review-edit-view" class="view review-card" style="display: none;">
+             <h2>Review Your Extracted Information</h2>
+             <p class="subtle-text">Please verify and edit the information extracted by our AI before submitting your application.</p>
+             <form id="review-edit-form">
+                <input type="hidden" id="review-job-id"> <!-- To resubmit jobId -->
 
-             <div class="ai-chat-section">
-                 <h3>Chat with Recruitment Assistant</h3>
-                 <p>Ask questions about the role or the application process.</p>
-                 <div id="candidate-chat-history" class="chat-history">
-                     <!-- Candidate chat messages -->
-                 </div>
-                 <form id="candidate-chat-form">
-                     <input type="hidden" id="chat-applicant-id">
-                     <input type="text" id="candidate-chat-input" placeholder="Ask a question..." required>
-                     <button type="submit" class="btn primary-btn"><span class="material-icons">send</span></button>
-                 </form>
-                  <p id="chat-message" class="message"></p>
-             </div>
-         </div>
+                <div class="profile-section review-section">
+                    <h5>Basic Information</h5>
+                    <div class="form-group review-group">
+                        <label for="review-name">Full Name:</label>
+                        <input type="text" id="review-name" name="name" required>
+                    </div>
+                     <div class="form-group review-group">
+                        <label for="review-email">Email:</label>
+                        <input type="email" id="review-email" name="email" required>
+                    </div>
+                     <div class="form-group review-group">
+                        <label for="review-phone">Phone:</label>
+                        <input type="tel" id="review-phone" name="phone">
+                    </div>
+                     <div class="form-group review-group">
+                        <label for="review-summary">AI Processed Summary:</label>
+                        <textarea id="review-summary" name="parsedSummary" rows="4"></textarea>
+                    </div>
+                </div>
+
+                <div class="profile-section review-section">
+                    <h5>Work Experience (Edit descriptions/achievements)</h5>
+                    <div id="review-experience-list" class="dynamic-section">
+                        <!-- Experience items will be added here by JS -->
+                    </div>
+                    <!-- Add Button for manual entry? (Optional) -->
+                </div>
+
+                 <div class="profile-section review-section">
+                    <h5>Skills (Verify levels, add/remove)</h5>
+                    <div id="review-skills-list" class="dynamic-section skills-container review-skills">
+                         <!-- Skills items will be added here by JS -->
+                    </div>
+                     <!-- Add Button for manual entry? (Optional) -->
+                </div>
+
+                 <div class="profile-section review-section">
+                    <h5>Education (Verify details)</h5>
+                    <div id="review-education-list" class="dynamic-section">
+                        <!-- Education items will be added here by JS -->
+                    </div>
+                     <!-- Add Button for manual entry? (Optional) -->
+                </div>
+
+                <!-- Add Review Sections for Certs, Links etc. -->
+
+
+                 <button type="submit" id="confirm-submit-btn" class="btn primary-btn full-width-btn">
+                    <span class="material-icons" style="margin-right: 5px;">check_circle</span> Confirm & Submit Application
+                </button>
+                 <p id="confirm-message" class="message"></p>
+
+             </form>
+        </div>
+        <!-- === END: Review & Edit View === -->
 
         <!-- Loading/Error View -->
-        <div id="loading-view" class="view active">
-            <p>Loading...</p>
-        </div>
-         <div id="error-view" class="view" style="display: none;">
-            <p id="error-message">An error occurred.</p>
-        </div>
+        <div id="loading-view" class="view"><p>Loading...</p></div> <!-- Start hidden now -->
+        <div id="error-view" class="view" style="display: none;"><p id="error-message">An error occurred.</p></div>
 
     </main>
 
-    <script src="candidate-app.js"></script>
+    <script src="/candidate-app.js"></script> <!-- Use root-relative -->
 </body>
 </html>

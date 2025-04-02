@@ -1,9 +1,37 @@
+// server/routes/api.js
 const express = require('express');
 const router = express.Router();
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs-extra'); // Use fs-extra
 const dataStore = require('../services/dataStore');
 const geminiService = require('../services/geminiService');
-const Job = require('../models/Job');
 const Applicant = require('../models/Applicant');
+const Job = require('../models/Job');
+
+
+// --- Multer Configuration (Save to Disk) ---
+const UPLOADS_DIR = path.join(__dirname, '../uploads'); // Create an 'uploads' folder in project root
+
+// Ensure uploads directory exists
+fs.ensureDirSync(UPLOADS_DIR);
+
+const storage = multer.diskStorage({
+    destination: function (req, file, cb) {
+        cb(null, UPLOADS_DIR); // Save files to the uploads directory
+    },
+    filename: function (req, file, cb) {
+        // Create a unique filename: fieldname-timestamp-originalfilename
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+        cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
+    }
+});
+
+const upload = multer({
+    storage: storage,
+    limits: { fileSize: 10 * 1024 * 1024 } // Limit file size (e.g., 10MB)
+});
+// --- End Multer Configuration ---
 
 // --- Job Routes ---
 router.post('/jobs', async (req, res) => {
@@ -323,5 +351,165 @@ router.get('/config/stages', (req, res) => {
     res.json(dataStore.getStagesConfig());
 });
 
+// --- Applicant Submission Route ---
+// Handles file uploads AND links
+router.post('/applicants/submit', upload.single('resumeFile'), async (req, res) => {
+    try {
+        const { jobId, linkedinUrl, githubUrl, portfolioUrl, otherLinks } = req.body;
+        const resumeFile = req.file;
+
+        console.log("--- Received PARSE request /api/applicants/submit ---");
+        console.log(" > req.body:", req.body);
+        console.log(" > req.file:", resumeFile);
+
+        if (!jobId || (!resumeFile && !linkedinUrl && !githubUrl && !portfolioUrl)) {
+             if (resumeFile && resumeFile.path) { await fs.unlink(resumeFile.path).catch(err => console.error("Cleanup failed:", err)); }
+            return res.status(400).json({ message: 'Job ID and at least one resume source (file/link) are required.' });
+        }
+        // Optional: Check if job exists here too, but main check can be on confirmation
+
+        // --- Trigger AI Parsing ---
+        const parsedData = await geminiService.parseResumeAdvanced(resumeFile, { linkedinUrl, githubUrl, portfolioUrl, otherLinks });
+
+        // // --- IMPORTANT: Delete the uploaded file AFTER parsing is done ---
+        // if (resumeFile && resumeFile.path) {
+        //     await fs.unlink(resumeFile.path).catch(err => console.error("Post-parse cleanup failed:", err));
+        //     console.log("Cleaned up uploaded file:", resumeFile.path);
+        // }
+        // // --- END Delete ---
+
+
+        if (parsedData.error) {
+             return res.status(500).json({ message: "AI Parsing Failed", details: parsedData.error });
+        }
+
+        // Return the PARSED data to the frontend for review
+        console.log("Sending parsed data back to frontend for review.");
+        res.status(200).json({ parsedData: parsedData }); // Send parsed data back
+
+    } catch (error) {
+        console.error("Error during applicant parse request:", error);
+        // Attempt cleanup on unexpected error
+        if (req.file && req.file.path) {
+             await fs.unlink(req.file.path).catch(cleanupError => console.error("Error cleaning up file on catch:", cleanupError));
+        }
+        res.status(500).json({ message: 'Application parsing failed unexpectedly.' });
+    }
+});
+
+// --- NEW Applicant Confirmation Route ---
+router.post('/applicants/confirm', async (req, res) => {
+    try {
+        const { jobId, confirmedData } = req.body; // Expect jobId and the potentially edited data
+
+        console.log("--- Received CONFIRM request /api/applicants/confirm ---");
+        console.log(" > Job ID:", jobId);
+        // console.log(" > Confirmed Data:", confirmedData); // Log carefully if sensitive
+
+        if (!jobId || !confirmedData || !confirmedData.name || !confirmedData.email) {
+             return res.status(400).json({ message: 'Job ID and confirmed applicant data (including name/email) are required.' });
+        }
+
+        const job = dataStore.getJob(jobId);
+        if (!job) {
+             return res.status(404).json({ message: 'Job specified not found.' });
+        }
+
+        // Use the CONFIRMED data to create the Applicant
+        // The Applicant constructor needs to handle this 'confirmedData' structure
+        const newApplicant = new Applicant(jobId, confirmedData.source || 'Confirmed Upload/Link', confirmedData); // Pass confirmedData
+
+        // Add appropriate initial stage
+        newApplicant.currentStageId = 'submitted';
+        newApplicant.stageHistory.push({ stageId: 'submitted', enteredAt: new Date().toISOString(), status: 'pending_review' });
+
+        dataStore.addApplicant(newApplicant);
+
+        // Add applicant to job's list
+        job.applicants = job.applicants || []; // Ensure array exists
+        job.applicants.push(newApplicant.id);
+        dataStore.updateJob(job);
+
+        console.log(`Applicant ${newApplicant.id} created and confirmed for job ${jobId}.`);
+        res.status(201).json({ message: 'Application Confirmed and Submitted!', applicantId: newApplicant.id });
+
+    } catch (error) {
+        console.error("Error during applicant confirmation:", error);
+        res.status(500).json({ message: 'Application confirmation failed.' });
+    }
+});
+
+// --- Get Ranked Applicants for a Job ---
+router.get('/jobs/:jobId/applicants/ranked', async (req, res) => {
+    try {
+       const jobId = req.params.jobId;
+       const job = dataStore.getJob(jobId);
+       if (!job) return res.status(404).json({ message: 'Job not found' });
+
+       let applicants = dataStore.getApplicantsForJob(jobId); // Get all applicants for the job
+
+       // --- Trigger Ranking Logic (potentially re-rank on request or use stored ranks) ---
+       // This could be complex. For now, assume ranks are stored or calculated on the fly.
+       // Example: Fetch stored ranks or re-rank if needed
+       applicants = await geminiService.rankApplicantsForJob(job, applicants); // This function needs to exist and return ranked data
+        // --- Get Stage Config for Name Lookup ---
+        const stagesConfig = dataStore.getStagesConfig(); // Fetch config on backend
+
+       // Filter/format data for HM view (summaries, scores)
+       // Filter/format data for HM view
+       const rankedList = applicants.map(app => {
+        // --- Find Stage Name using Backend Config ---
+        const stageConfig = stagesConfig.find(s => s.id === app.currentStageId);
+        const stageName = stageConfig ? stageConfig.name : (app.currentStageId || 'Unknown'); // Get name or use ID/Unknown
+        // --- End Find Stage Name ---
+
+        return { // Return the formatted object
+            id: app.id,
+            name: app.anonymized ? 'Candidate ' + app.id.slice(-4) : app.name,
+            email: app.anonymized ? '---' : app.email,
+            overallScore: app.rankings?.[jobId]?.overallScore || 0,
+            skillMatch: app.rankings?.[jobId]?.skillMatch || 0,
+            experienceRelevance: app.rankings?.[jobId]?.experienceRelevance || 0,
+            // ... other ranking categories
+            summary: app.rankings?.[jobId]?.generatedSummary || 'N/A',
+            isHiddenGem: app.rankings?.[jobId]?.isHiddenGem || false,
+            currentStage: stageName // Use the resolved stageName
+        };
+    }).sort((a, b) => b.overallScore - a.overallScore);
+
+    res.json(rankedList); // Send the list with resolved stage names
+    } catch (error) {
+        console.error("Error fetching ranked applicants:", error);
+        res.status(500).json({ message: 'Failed to retrieve ranked applicants' });
+    }
+});
+
+
+// --- Get Interview Prep Questions ---
+router.get('/applicants/:applicantId/interview-prep', async (req, res) => {
+   try {
+        const applicant = dataStore.getApplicant(req.params.applicantId);
+        if (!applicant) return res.status(404).json({ message: 'Applicant not found' });
+        const job = dataStore.getJob(applicant.jobId);
+        if (!job) return res.status(404).json({ message: 'Associated job not found' });
+
+        const questions = await geminiService.generateInterviewQuestions(job, applicant);
+        res.json({ questions });
+   } catch (error) {
+        console.error("Error generating interview prep:", error);
+        res.status(500).json({ message: 'Failed to generate interview questions' });
+   }
+});
+// --- Get Parsed Applicant Data ---
+router.get('/applicants/:applicantId/parsed', (req, res) => {
+    const applicant = dataStore.getApplicant(req.params.applicantId);
+    if (applicant) {
+        // Return only the relevant parsed fields, maybe exclude internal state
+        const { name, email, phone, parsedSummary, workExperience, skills, education, certifications, advancedFields, careerTrajectory, discrepancies } = applicant;
+        res.json({ name, email, phone, parsedSummary, workExperience, skills, education, certifications, advancedFields, careerTrajectory, discrepancies });
+    } else {
+        res.status(404).json({ message: 'Applicant not found' });
+    }
+});
 
 module.exports = router;

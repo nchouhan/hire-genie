@@ -1,0 +1,5 @@
+cd recruitment-agent
+npm init -y
+npm install express dotenv node-fetch # Or use built-in fetch in newer Node versions
+# Add node-persist for slightly easier file DB management (optional but recommended)
+npm install node-persist

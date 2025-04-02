@@ -13,6 +13,20 @@ class Job {
         this.createdAt = new Date().toISOString();
         this.createdBy = createdBy;
         this.applicants = []; // Array of applicant IDs
+        // --- JD Analysis Fields ---
+        this.jdKeywords = { // Store extracted keywords and weights for ranking
+            requiredSkills: [/* { skill: 'Python', weight: 5 } */],
+            experienceYears: { min: 5, weight: 4 },
+            culturalFit: [/* { keyword: 'collaboration', weight: 3 } */],
+            // ... other categories based on JD analysis
+        };
+        this.rankingModelWeights = { // Allow HM to adjust category weights
+            skillMatch: 0.4,
+            experienceRelevance: 0.25,
+            achievementImpact: 0.15,
+            educationCerts: 0.1,
+            innovationPotential: 0.1
+       };
     }
 }
 module.exports = Job;

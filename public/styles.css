@@ -1019,3 +1019,399 @@ hr {
 .view.active {
     display: block; /* Or 'flex', 'grid' if the view's internal layout needs it */
 }
+
+/* --- Applicant Upload View --- */
+.submit-card {
+    max-width: 600px; /* Limit width of upload form */
+    margin: 2rem auto;
+}
+.upload-area {
+    border: 2px dashed var(--border-color);
+    border-radius: var(--border-radius);
+    padding: 2rem;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color 0.2s ease, background-color 0.2s ease;
+    margin-bottom: 1.5rem;
+    position: relative; /* For overlay effects if needed */
+}
+.upload-area.drag-over { /* Style when file is dragged over */
+    border-color: var(--google-blue);
+    background-color: rgba(66, 133, 244, 0.05);
+}
+.upload-area .drop-indicator {
+    color: var(--text-secondary);
+}
+.upload-area .upload-icon {
+    font-size: 3rem;
+    color: var(--google-blue);
+    margin-bottom: 0.5rem;
+    display: block;
+}
+.upload-area .file-name {
+    margin-top: 1rem;
+    font-weight: 500;
+    color: var(--google-green-dark);
+}
+.or-divider {
+    text-align: center;
+    border-bottom: 1px solid var(--border-color);
+    line-height: 0.1em;
+    margin: 1.5rem 0;
+}
+.or-divider span {
+    background: var(--background-white);
+    padding: 0 10px;
+    color: var(--text-secondary);
+    font-size: var(--label-font-size);
+    text-transform: uppercase;
+}
+.full-width-btn {
+    width: 100%;
+    padding: 0.8rem 1.5rem; /* Larger submit button */
+}
+.progress-indicator {
+    margin-top: 1rem;
+    width: 100%;
+    background-color: #e0e0e0;
+    border-radius: 4px;
+    overflow: hidden;
+}
+.progress-indicator .progress-bar {
+    width: 0%; /* Controlled by JS */
+    height: 8px;
+    background-color: var(--google-blue);
+    transition: width 0.3s ease;
+}
+.progress-indicator p {
+    text-align: center;
+    font-size: var(--label-font-size);
+    margin-top: 0.5rem;
+    margin-bottom: 0;
+    color: var(--text-secondary);
+}
+
+
+/* --- Candidate Portal View --- */
+.profile-section {
+    margin-bottom: 1.5rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid var(--border-color);
+}
+.profile-section:last-child {
+    border-bottom: none;
+}
+.profile-section h5 { /* Use section header style */
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 0.75rem;
+    padding-bottom: 0.4rem;
+}
+.profile-section .section-content {
+    font-size: var(--small-font-size);
+    padding-left: 0; /* No indent needed here */
+}
+.profile-section .italic-text {
+    font-style: italic;
+    color: var(--text-secondary);
+}
+.skills-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+.skill-tag {
+    background-color: #e8f0fe; /* Light blue background */
+    color: #174ea6; /* Darker blue text */
+    padding: 0.3rem 0.8rem;
+    border-radius: 16px;
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+.skill-tag .proficiency {
+    font-size: 0.7rem;
+    margin-left: 5px;
+    opacity: 0.7;
+}
+.work-experience-item { /* Style for experience cards/items */
+    margin-bottom: 0.8rem;
+}
+.work-experience-item strong { display: block; margin-bottom: 2px; } /* Company name */
+.work-experience-item em { font-size: 0.9em; color: var(--text-secondary); margin-left: 5px;} /* Duration/Location */
+
+
+/* --- HM - Ranked Applicant List View --- */
+.list-controls {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+    align-items: center;
+    flex-wrap: wrap; /* Allow controls to wrap */
+}
+.list-controls input[type="search"],
+.list-controls select {
+    /* Inherit basic form styles */
+    padding: 0.4rem 0.6rem; /* Smaller padding */
+    font-size: var(--small-font-size);
+    max-width: 200px; /* Limit width */
+}
+.list-controls .btn {
+     padding: 0.4rem 0.8rem; /* Smaller button padding */
+}
+
+#ranked-applicant-list-container {
+    /* Styles for table or cards would go here */
+    /* Example for basic table */
+    width: 100%;
+    border-collapse: collapse;
+}
+#ranked-applicant-list-container th,
+#ranked-applicant-list-container td {
+    padding: 0.8rem 0.5rem;
+    text-align: left;
+    border-bottom: 1px solid var(--border-color);
+    font-size: var(--small-font-size);
+    vertical-align: middle;
+}
+#ranked-applicant-list-container th {
+    font-weight: 500;
+    color: var(--text-secondary);
+    background-color: var(--background-light);
+}
+#ranked-applicant-list-container tr:hover {
+    background-color: var(--background-light);
+    cursor: pointer;
+}
+.score-badge {
+     font-weight: 500;
+     padding: 0.2rem 0.5rem;
+     border-radius: 4px;
+     font-size: 0.8rem;
+     color: white;
+}
+.score-badge.high { background-color: var(--google-green); }
+.score-badge.medium { background-color: var(--google-yellow); color: #333;}
+.score-badge.low { background-color: var(--google-red); }
+.hidden-gem-indicator { color: var(--google-yellow); margin-left: 5px; font-weight: bold; }
+
+
+/* --- HM - Candidate Profile View --- */
+.applicant-profile-grid {
+    display: grid;
+    grid-template-columns: minmax(300px, 2fr) minmax(250px, 1fr); /* Adjust ratios */
+    gap: 2rem; /* Gap between columns */
+}
+.profile-column {
+    /* Basic styling for columns */
+}
+.profile-data-column { /* Left column */
+    /* Styles specific to data display */
+}
+.profile-insights-column { /* Right column */
+    background-color: var(--background-light); /* Slightly different background */
+    padding: 1.5rem;
+    border-radius: var(--border-radius);
+    border: 1px solid var(--border-color);
+}
+.profile-insights-column .profile-section {
+     padding-bottom: 1rem; margin-bottom: 1rem; border-bottom: 1px solid #d0d2d6; /* Separators inside insights */
+}
+.profile-insights-column .profile-section:last-child { border-bottom: none;}
+
+.timeline .work-experience-item { /* Add timeline styles if desired */
+    position: relative; padding-left: 20px; border-left: 2px solid var(--border-color); margin-left: 5px; padding-bottom: 1rem;
+}
+.timeline .work-experience-item::before { content: ''; position: absolute; left: -6px; top: 5px; width: 10px; height: 10px; background: var(--google-blue); border-radius: 50%; }
+
+.score-details { list-style: none; padding-left: 0; font-size: var(--small-font-size); color: var(--text-secondary); }
+.score-details li { margin-bottom: 0.3rem; }
+
+#interview-questions-list li::before { background-color: var(--text-secondary); } /* Different bullet for questions */
+
+/* --- Job Config View --- */
+.job-config-section {
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border-color);
+}
+
+.view-applicants-button {
+    float: right;
+    margin-top: -40px; /* Adjust like enhance button */
+    /* position: absolute; */ /* Alternative */
+    /* top: 2rem; */
+    /* right: calc(2rem + 150px); */ /* Position left of enhance button */
+}
+/* --- Dark Theme for Candidate Page --- */
+body.dark-theme.candidate-page {
+    background-color: #1a1d21; /* Dark background */
+    color: #e0e1e2; /* Light primary text */
+}
+.dark-theme header {
+    background-color: #25282d; /* Slightly lighter dark for header */
+    border-bottom-color: #3a3d42;
+}
+.dark-theme .container {
+     /* Keep container structure */
+}
+.dark-theme .submit-card,
+.dark-theme .review-card,
+.dark-theme .parsing-container,
+.dark-theme #error-view,
+.dark-theme #loading-view {
+    background-color: #25282d; /* Dark card background */
+    border: 1px solid #3a3d42; /* Subtle border */
+    border-radius: var(--border-radius);
+    padding: 2rem; /* Standard padding */
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    width: 100%; /* Ensure full width within centered container */
+}
+.dark-theme .subtle-text {
+    color: #9aa0a6; /* Lighter secondary text */
+    font-size: var(--small-font-size);
+    margin-bottom: 1.5rem;
+}
+.dark-theme .or-divider {
+    border-bottom-color: #3a3d42;
+}
+.dark-theme .or-divider span {
+    background: #25282d; /* Match card background */
+    color: #9aa0a6;
+}
+
+/* Dark theme form elements */
+.dark-theme .form-group label {
+    color: #bdc1c6; /* Lighter label */
+}
+.dark-theme .form-group input[type="text"],
+.dark-theme .form-group input[type="email"],
+.dark-theme .form-group input[type="tel"],
+.dark-theme .form-group input[type="url"],
+.dark-theme .form-group input[type="number"],
+.dark-theme .form-group select,
+.dark-theme .form-group textarea {
+    background-color: #1a1d21; /* Input background matches body */
+    border-color: #5f6368; /* Google grey border */
+    color: #e0e1e2; /* Light text */
+    border-radius: 4px; /* Slightly less rounded */
+}
+.dark-theme .form-group input::placeholder,
+.dark-theme .form-group textarea::placeholder {
+    color: #70757a;
+}
+.dark-theme .form-group input:focus,
+.dark-theme .form-group select:focus,
+.dark-theme .form-group textarea:focus {
+    border-color: var(--google-blue);
+    box-shadow: 0 0 0 1px var(--google-blue);
+    background-color: #2c3136; /* Slightly lighter on focus */
+}
+
+/* Dark theme upload area */
+.dark-theme .upload-area {
+    border-color: #5f6368;
+    background-color: rgba(255, 255, 255, 0.02); /* Very subtle inner */
+}
+.dark-theme .upload-area.drag-over {
+    border-color: var(--google-blue);
+    background-color: rgba(66, 133, 244, 0.1);
+}
+.dark-theme .upload-area .drop-indicator {
+    color: #9aa0a6;
+}
+.dark-theme .upload-area .upload-icon {
+    color: var(--google-blue);
+}
+.dark-theme .upload-area .file-name {
+    color: var(--google-green); /* Use green for success indication */
+}
+
+/* Dark theme buttons */
+.dark-theme .btn.primary-btn {
+    /* Keep blue */
+}
+.dark-theme .btn.secondary-btn {
+    background-color: #3a3d42;
+    color: #bdc1c6;
+    border-color: #5f6368;
+}
+.dark-theme .btn.secondary-btn:hover {
+    background-color: #4a4d52;
+}
+
+
+/* --- Parsing View Styles --- */
+.parsing-container {
+    padding: 3rem 2rem;
+    text-align: center;
+}
+.parsing-content {
+    /* Vertical centering if needed */
+}
+.parsing-animation {
+    margin-bottom: 1.5rem;
+}
+.parsing-status {
+    font-size: 1.1rem;
+    color: #bdc1c6;
+    font-weight: 300;
+}
+
+/* --- Review & Edit View Styles --- */
+.review-card h2 {
+    text-align: center;
+    margin-bottom: 0.5rem;
+    color: #e0e1e2; /* Light title */
+}
+.review-card .subtle-text {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+.review-section {
+    margin-bottom: 1.5rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid #3a3d42; /* Darker border */
+}
+.review-section:last-child {
+    border-bottom: none;
+}
+.review-section h5 { /* Use same style as profile section headers */
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: #9aa0a6; /* Secondary color */
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 1rem; /* More space below header */
+}
+.review-group {
+    margin-bottom: 1rem;
+}
+.dynamic-section .experience-edit-item,
+.dynamic-section .skill-edit-item,
+.dynamic-section .education-edit-item {
+    border: 1px solid #3a3d42;
+    border-radius: 4px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    background-color: #2c3136; /* Slightly lighter background for items */
+}
+/* Make labels smaller within dynamic items */
+.dynamic-section .form-group label {
+     font-size: 0.75rem; /* 12px */
+     margin-bottom: 0.3rem;
+}
+.review-skills .skill-edit-item { /* Specific layout for skills */
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+}
+.review-skills .skill-edit-item .form-group {
+    flex-grow: 1; /* Let name field grow */
+    margin-bottom: 0; /* Remove bottom margin */
+}
+.review-skills .skill-edit-item select { /* Proficiency dropdown */
+     max-width: 150px; /* Limit width */
+}

@@ -3,30 +3,27 @@
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Talenta AI Agent</title> <!-- Update title -->
-        <link rel="stylesheet" href="styles.css">
+        <title>Talenta AI Agent</title>
+        <link rel="stylesheet" href="/styles.css"> <!-- Root relative path -->
         <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
         <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     </head>
-    <body>
-        <!-- === SPLASH SCREEN (Initially Visible) === -->
-        <div id="splash-screen" class="visible">
-            <div class="splash-content">
-                <!-- Re-use the animated gradient style -->
-                <h1 class="animated-gradient-header splash-title">Talenta AI Agent</h1>
-                <p class="splash-tagline">AI Agent for Intelligent Recruitment.</p>
-                <!-- Optional: Add a subtle loading indicator if desired -->
-                <div class="splash-loader"></div>
-            </div>
-        </div>
-        <!-- === END SPLASH SCREEN === -->
+<body class="dark-theme"> <!-- Apply dark theme if desired, remove if not -->
 
-        <!-- === MAIN APP CONTAINER (Initially Hidden) === -->
-        <div id="app-container" class="hidden">
+    <!-- === SPLASH SCREEN (Initially Visible) === -->
+    <div id="splash-screen" class="visible">
+        <div class="splash-content">
+            <h1 class="animated-gradient-header splash-title">Talenta AI Agent</h1>
+            <p class="splash-tagline">AI Agent for Intelligent Recruitment.</p>
+            <div class="splash-loader"></div>
+        </div>
+    </div>
+    <!-- === END SPLASH SCREEN === -->
+
+    <!-- === MAIN APP CONTAINER (Initially Hidden) === -->
+    <div id="app-container" class="hidden">
         <header>
             <h1 class="animated-gradient-header">Talenta AI Agent</h1>
-            <!-- <h1>Recruitment Agent Dashboard</h1> -->
-            <!-- Add navigation if needed -->
         </header>
 
         <main class="container">
@@ -34,17 +31,18 @@
                 <h2>Jobs</h2>
                 <button id="create-job-btn" class="btn primary-btn">Create New Job</button>
                 <div id="job-list">
-                    <!-- Job list will be loaded here -->
                     <p>Loading jobs...</p>
                 </div>
             </aside>
 
             <section class="content">
+                <!-- 1. Welcome View (Starts Active) -->
                 <div id="welcome-view" class="view active">
                     <h2>Welcome</h2>
-                    <p>Select a job from the list to view applicants or create a new job.</p>
+                    <p>Select a job from the list to view ranked applicants or create a new job.</p>
                 </div>
 
+                <!-- 2. Create Job View -->
                 <div id="create-job-view" class="view">
                     <h2>Create New Job</h2>
                     <form id="create-job-form">
@@ -65,11 +63,11 @@
                             <textarea id="job-description" rows="4" required></textarea>
                         </div>
                         <div class="form-group">
-                            <label for="job-requirements">Required Skills (Draft - comma separated):</label>
+                            <label for="job-requirements">Required Skills (Draft - use newlines):</label> <!-- Updated placeholder text -->
                             <textarea id="job-requirements" rows="3" required></textarea>
                         </div>
                         <div class="form-group">
-                            <label for="job-nice-to-have">Nice-to-Have Skills (Draft - comma separated):</label>
+                            <label for="job-nice-to-have">Nice-to-Have Skills (Draft - use newlines):</label> <!-- Updated placeholder text -->
                             <textarea id="job-nice-to-have" rows="2"></textarea>
                         </div>
                         <div class="form-group">
@@ -86,94 +84,80 @@
                     </div>
                 </div>
 
-                <!-- <div id="job-details-view" class="view">
-                    <h2 id="job-details-title">Job Details</h2>
-                    <p><strong id="job-details-id"></strong></p>
-                    <button id="show-enhance-view-btn" class="btn secondary-btn" style="float: right;">Enhance with AI</button>
-                    <pre id="job-details-full-desc" class="output-area"></pre>
-                    <hr>
-                    <h3>Applicants</h3>
-                    <div id="applicant-list">
-                        Applicant list for the selected job
-                        <p>No applicants yet or none selected.</p>
-                    </div>
-                </div> -->
+                <!-- 3. Job Details / Config View -->
                 <div id="job-details-view" class="view">
-                    <!-- Job Title and ID -->
-                <h2 id="job-details-title" class="view-title">Job Title Loading...</h2>
-                <p id="job-details-id" class="job-id-display">ID: ---</p>
-    
-                    <!-- *** ADD BUTTON BACK HERE *** -->
-                    <button id="show-enhance-view-btn" class="btn secondary-btn enhance-button-job-details">
-                        <span class="material-icons" style="font-size: 1.1em; margin-right: 4px;">auto_awesome</span> Enhance with AI
-                    </button>
-                    <!-- *************************** -->
+                    <h2 id="job-details-title" class="view-title">Job Title Loading...</h2>
+                    <p id="job-details-id" class="job-id-display">ID: ---</p>
 
-                <!-- Meta Information Section -->
-                <div class="job-meta-info">
-                    <div class="meta-item">
-                        <span class="material-icons meta-icon">business_center</span>
-                        <span id="job-details-department" class="meta-value">---</span>
-                    </div>
-                    <div class="meta-item">
-                        <span class="material-icons meta-icon">location_on</span>
-                        <span id="job-details-location" class="meta-value">---</span>
-                    </div>
-                    <div class="meta-item">
-                        <span class="material-icons meta-icon">payments</span>
-                        <span id="job-details-salary" class="meta-value">---</span>
-                    </div>
+                    <button id="show-enhance-view-btn" class="btn secondary-btn enhance-button-job-details">
+                        <span class="material-icons" style="font-size: 1.1em; margin-right: 4px;">auto_awesome</span> Enhance JD
+                    </button>
+                     <button id="view-ranked-applicants-btn" class="btn primary-btn view-applicants-button">
+                        <span class="material-icons" style="font-size: 1.1em; margin-right: 4px;">groups</span> View Ranked Applicants
+                    </button>
+
+                    <!-- Meta Information Section -->
+                    <div class="job-meta-info">
                         <div class="meta-item">
-                        <span class="material-icons meta-icon">work_history</span>
-                        <span id="job-details-status" class="meta-value">---</span>
+                            <span class="material-icons meta-icon">business_center</span>
+                            <span id="job-details-department" class="meta-value">---</span>
+                        </div>
+                        <div class="meta-item">
+                            <span class="material-icons meta-icon">location_on</span>
+                            <span id="job-details-location" class="meta-value">---</span>
+                        </div>
+                        <div class="meta-item">
+                            <span class="material-icons meta-icon">payments</span>
+                            <span id="job-details-salary" class="meta-value">---</span>
+                        </div>
+                         <div class="meta-item">
+                            <span class="material-icons meta-icon">work_history</span>
+                            <span id="job-details-status" class="meta-value">---</span>
+                        </div>
                     </div>
-                </div>
-    
-                <!-- Description Section -->
-                <div class="job-section">
-                    <h5 class="section-header">Description</h5>
-                    <p id="job-details-description" class="section-content">Loading description...</p>
-                </div>
-    
-                <!-- Requirements Section -->
-                <div class="job-section">
-                    <h5 class="section-header">Requirements</h5>
-                    <ul id="job-details-requirements-list" class="section-content job-list-items">
-                        <li>Loading requirements...</li>
-                    </ul>
-                </div>
-    
+
+                    <!-- Description Section -->
+                    <div class="job-section">
+                        <h5 class="section-header">Description</h5>
+                        <p id="job-details-description" class="section-content">Loading description...</p>
+                    </div>
+
+                    <!-- Requirements Section -->
+                    <div class="job-section">
+                        <h5 class="section-header">Requirements</h5>
+                        <ul id="job-details-requirements-list" class="section-content job-list-items">
+                            <li>Loading requirements...</li>
+                        </ul>
+                    </div>
+
                     <!-- Nice-to-Have Section -->
-                <div class="job-section">
-                    <h5 class="section-header">Nice-to-Have</h5>
+                    <div class="job-section">
+                        <h5 class="section-header">Nice-to-Have</h5>
                         <ul id="job-details-nice-to-have-list" class="section-content job-list-items">
                             <li>Loading nice-to-have...</li>
                         </ul>
+                    </div>
+
+                     <!-- Job Config Section (Placeholder) -->
+                     <div class="job-config-section">
+                        <h5>Job Configuration (Placeholder)</h5>
+                        <p>Details about extracted keywords and ranking model weights for this job would go here.</p>
+                    </div>
                 </div>
-    
-                    <!-- Applicants Section (Keep as is) -->
-                <hr>
-                <h3>Applicants</h3>
-                <div id="applicant-list">
-                    <p>No applicants yet or none selected.</p>
-                </div>
-            </div>
-                
+
+                <!-- 4. Enhance Job View -->
                 <div id="enhance-job-view" class="view">
                     <button id="back-to-job-from-enhance-btn" class="btn back-btn"><span class="material-icons">arrow_back</span> Back to Job Details</button>
                     <h2>Enhance Job Description: <span id="enhance-job-title-header"></span></h2>
                     <p>Review AI suggestions below. Edit the text in the 'Suggested' boxes or accept the suggestion.</p>
                     <div id="enhancement-fields">
-                        <!-- Fields will be populated by JS -->
                         <p>Loading suggestions...</p>
                     </div>
                     <div id="enhancement-rationale" class="output-area" style="margin-top: 15px;">
-                        <!-- Loading State Elements (Hidden by default) -->
                         <div class="loading-indicator" style="display: none;">
-                            <span class="material-icons loading-icon">auto_awesome</span> <!-- Choose an icon -->
+                            <span class="material-icons loading-icon">auto_awesome</span>
                             <span class="loading-text">Analyzing...</span>
                         </div>
-                        <!-- Actual Content Wrapper -->
                         <div class="rationale-content-wrapper">
                             <strong>AI Rationale:</strong> <span id="rationale-content"></span>
                         </div>
@@ -184,96 +168,118 @@
                     </div>
                 </div>
 
-                <div id="applicant-details-view" class="view">
-                    <button id="back-to-job-btn" class="btn back-btn"><span class="material-icons">arrow_back</span> Back to Job</button>
-                    <h2 id="applicant-name">Applicant Details</h2>
-                    <div class="applicant-info">
-                        <p><strong>Email:</strong> <span id="applicant-email"></span></p>
-                        <p><strong>Phone:</strong> <span id="applicant-phone"></span></p>
-                        <p><strong>Resume:</strong> <a id="applicant-resume" href="#" target="_blank">View Resume</a></p>
-                        <p><strong>Cover Letter:</strong></p>
-                        <pre id="applicant-cover-letter" class="output-area"></pre>
-                        <p><strong>Applied On:</strong> <span id="applicant-applied-at"></span></p>
+                <!-- 5. Ranked Applicant List View -->
+                <div id="ranked-list-view" class="view">
+                    <button id="back-to-job-config-btn" class="btn back-btn"><span class="material-icons">arrow_back</span> Back to Job Config</button>
+                    <h2 id="ranked-list-title">Ranked Applicants for: Job Title</h2>
+                    <div class="list-controls">
+                        <input type="search" id="applicant-search" placeholder="Search applicants...">
+                        <select id="applicant-sort">
+                            <option value="score_desc">Sort by Score (High-Low)</option>
+                            <option value="score_asc">Sort by Score (Low-High)</option>
+                            <option value="name_asc">Sort by Name (A-Z)</option>
+                        </select>
+                        <button id="toggle-anonymize-btn" class="btn secondary-btn" title="Toggle Anonymization">
+                             <span class="material-icons">visibility_off</span> Anonymize
+                        </button>
+                         <button id="show-ranking-graph-btn" class="btn secondary-btn" title="Show Ranking Graph">
+                             <span class="material-icons">bubble_chart</span> Graph View
+                        </button>
                     </div>
-
-                    <div class="lifecycle-section">
-                        <h3>Application Lifecycle</h3>
-                        <div id="lifecycle-stages" class="stages-container">
-                            <!-- Stages will be rendered here -->
-                        </div>
-                        <div id="current-stage-details">
-                            <h4>Current Stage: <span id="current-stage-name"></span></h4>
-                            <p><strong>Objectives:</strong> <span id="current-stage-objectives"></span></p>
-                            <p><strong>Assigned To:</strong> <span id="current-stage-assigned"></span></p>
-
-                            <h5>Feedback History for Current Stage:</h5>
-                            <div id="current-stage-feedback-list" class="feedback-list">
-                                <p>No feedback yet for this stage.</p>
-                            </div>
-
-                            <h5>Add Feedback for Current Stage:</h5>
-                            <form id="add-feedback-form">
-                                <input type="hidden" id="feedback-applicant-id">
-                                <input type="hidden" id="feedback-stage-id">
-                                <div class="form-group">
-                                    <label for="feedback-comment">Comment:</label>
-                                    <textarea id="feedback-comment" rows="3" required></textarea>
-                                </div>
-                                <div class="form-group">
-                                    <label for="feedback-rating">Rating (1-5, Optional):</label>
-                                    <input type="number" id="feedback-rating" min="1" max="5">
-                                </div>
-                                <!-- Add input for feedbackBy or get from logged-in user context later -->
-                                <input type="hidden" id="feedback-by" value="recruiter@example.com"> <!-- Placeholder -->
-                                <button type="submit" class="btn secondary-btn">Submit Feedback</button>
-                            </form>
-
-                            <h5>Move to Next Stage / Decision:</h5>
-                            <form id="change-stage-form">
-                                <input type="hidden" id="stage-change-applicant-id">
-                                <div class="form-group">
-                                    <label for="stage-decision">Decision for Current Stage:</label>
-                                    <select id="stage-decision" required>
-                                        <option value="">-- Select --</option>
-                                        <option value="passed">Pass to Next Stage</option>
-                                        <option value="rejected">Reject Applicant</option>
-                                    </select>
-                                </div>
-                                <div id="next-stage-selector" class="form-group" style="display: none;">
-                                    <label for="next-stage-id">Next Stage:</label>
-                                    <select id="next-stage-id">
-                                        <!-- Next stages will be populated here -->
-                                    </select>
-                                    <label for="next-stage-assignee">Assign To:</label>
-                                    <input type="text" id="next-stage-assignee" placeholder="assignee@example.com"> <!-- Needs better selector later -->
-                                </div>
-                                <div class="form-group">
-                                    <label for="overall-feedback">Overall Stage Feedback (Optional):</label>
-                                    <textarea id="overall-feedback" rows="2"></textarea>
-                                </div>
-                                <button type="submit" class="btn primary-btn">Confirm Decision</button>
-                            </form>
-                        </div>
+                    <div id="ranked-applicant-list-container">
+                        <p>Loading ranked applicants...</p>
                     </div>
-
-                    <div class="ai-chat-section">
-                        <h3>AI Assistant - Candidate Assessment</h3>
-                        <div id="recruiter-chat-history" class="chat-history">
-                            <!-- AI assessment chat messages -->
-                        </div>
-                        <form id="recruiter-chat-form">
-                            <input type="hidden" id="ai-chat-applicant-id">
-                            <input type="hidden" id="ai-chat-job-id">
-                            <input type="text" id="recruiter-chat-input" placeholder="Ask AI about this candidate..." required>
-                            <button type="submit" class="btn primary-btn"><span class="material-icons">send</span></button>
-                        </form>
-                    </div>
-
                 </div>
-            </section>
-        </main>
-        </div>
-        <!-- End of Main App Container -->
-        <script src="app.js"></script>
-    </body>
+
+                <!-- 6. Ranking Graph View (Placeholder) -->
+                <div id="ranking-graph-view" class="view">
+                    <button id="back-to-ranked-list-btn" class="btn back-btn"><span class="material-icons">arrow_back</span> Back to List</button>
+                     <h2>Ranking Visualization</h2>
+                     <div id="ranking-chart-container" style="min-height: 400px; border: 1px dashed #ccc; display: flex; align-items: center; justify-content: center;">
+                        <p>Graph Placeholder (Requires Charting Library)</p>
+                    </div>
+                </div>
+
+                <!-- 7. Applicant Profile View (Single Correct Version) -->
+                <div id="applicant-details-view" class="view applicant-profile-grid">
+                     <button id="back-to-ranked-list-from-profile-btn" class="btn back-btn"><span class="material-icons">arrow_back</span> Back to Ranked List</button>
+
+                     <!-- Left Column: Parsed Data -->
+                     <div class="profile-column profile-data-column">
+                        <h3 id="profile-applicant-name">Applicant Name</h3>
+                        <p class="subtle-text"><span id="profile-applicant-email">email</span> | <span id="profile-applicant-phone">phone</span></p>
+                        <a id="profile-applicant-resume" href="#" target="_blank" class="btn secondary-btn btn-small" style="display: none;">View Original Resume</a>
+
+                        <div class="profile-section">
+                            <h5>AI Summary</h5>
+                            <p id="profile-summary" class="section-content italic-text">Loading...</p>
+                        </div>
+                         <div class="profile-section">
+                             <h5>Work Experience</h5>
+                             <div id="profile-experience-list" class="section-content timeline">Loading...</div>
+                         </div>
+                          <div class="profile-section">
+                             <h5>Skills</h5>
+                             <div id="profile-skills-list" class="section-content skills-container">Loading...</div>
+                         </div>
+                          <div class="profile-section">
+                             <h5>Education</h5>
+                             <div id="profile-education-list" class="section-content">Loading...</div>
+                         </div>
+                         <!-- TODO: Add Certifications/Links sections here -->
+                     </div>
+
+                     <!-- Right Column: AI Insights & Collaboration -->
+                     <div class="profile-column profile-insights-column">
+                         <div class="profile-section">
+                             <h5>AI Fitment Analysis</h5>
+                              <div id="profile-ranking-chart-placeholder" style="height: 150px; border: 1px dashed #eee; margin-bottom: 1rem; text-align: center; padding-top: 60px;">Radar Chart Placeholder</div>
+                             <p><strong>Overall Score:</strong> <span id="profile-overall-score">--</span>%</p>
+                             <p id="profile-ai-summary" class="section-content">Loading insights...</p>
+                              <ul class="score-details">
+                                  <li>Skill Match: <span id="profile-skill-score">--</span>%</li>
+                                  <li>Experience: <span id="profile-exp-score">--</span>%</li>
+                                  <!-- ... other scores ... -->
+                              </ul>
+                              <p id="profile-hidden-gem" style="color: var(--google-yellow); font-weight: 500; display: none;">Potential Hidden Gem!</p>
+                         </div>
+
+                         <div class="profile-section">
+                             <h5>Interview Prep</h5>
+                             <button id="generate-interview-questions-btn" class="btn secondary-btn">Generate Questions</button>
+                             <ul id="interview-questions-list" class="section-content job-list-items" style="margin-top: 1rem;">
+                                 <!-- Questions loaded here -->
+                             </ul>
+                         </div>
+
+                         <div class="profile-section">
+                             <h5>Team Collaboration (Placeholder)</h5>
+                             <textarea placeholder="Add internal notes..." rows="3" style="margin-bottom: 0.5rem;"></textarea>
+                             <select style="margin-bottom: 0.5rem;">
+                                 <option>Vote: (Select)</option>
+                                 <option value="yes">Yes</option>
+                                 <option value="no">No</option>
+                                 <option value="maybe">Maybe</option>
+                             </select>
+                             <input type="text" placeholder="Tag colleagues (@mention)">
+                         </div>
+                     </div>
+                 </div>
+                 <!-- === END: Applicant Profile View === -->
+                <!-- === ADD ERROR VIEW HERE === -->
+                <div id="error-view" class="view">
+                    <h2>An Error Occurred</h2>
+                    <p class="message error" id="error-message-content">Something went wrong. Please try again or contact support.</p>
+                    <!-- Optional: Button to go back -->
+                    <button onclick="window.location.reload()" class="btn secondary-btn">Reload Page</button>
+                </div>
+                <!-- === END ERROR VIEW === -->
+            </section> <!-- End .content -->
+        </main> <!-- End .container -->
+    </div> <!-- End #app-container -->
+
+    <script src="/app.js"></script> <!-- Root relative path -->
+    <!-- Optional: Add Chart.js library if implementing graphs -->
+    <!-- <script src="https://cdn.jsdelivr.net/npm/chart.js"></script> -->
+</body>
 </html>

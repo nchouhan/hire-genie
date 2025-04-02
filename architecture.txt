@@ -1,0 +1,21 @@
+recruitment-agent/
+├── public/             # Frontend files (served statically)
+│   ├── index.html
+│   ├── candidate.html  # Candidate application/portal page
+│   ├── styles.css
+│   └── app.js          # Frontend logic for recruiters
+│   └── candidate-app.js # Frontend logic for candidates
+├── server/             # Backend files
+│   ├── data/           # Folder for persistent data
+│   │   └── database.json # Our "database" file
+│   ├── services/
+│   │   └── geminiService.js # Logic to interact with Gemini API
+│   │   └── dataStore.js     # Handles loading/saving data
+│   ├── routes/
+│   │   └── api.js         # Defines API endpoints
+│   ├── models/
+│   │   └── Job.js
+│   │   └── Applicant.js
+│   └── server.js       # Main backend server file
+├── .env                # To store API keys securely
+└── package.json

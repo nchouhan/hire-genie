@@ -15,30 +15,43 @@ app.use(express.json()); // Parse JSON bodies
 app.use(express.urlencoded({ extended: true })); // Parse URL-encoded bodies
 console.log("Middleware initialized.");
 // Serve static files (Frontend)
-app.use(express.static(path.join(__dirname, '../public')));
+
+const publicDirPath = path.join(__dirname, '../public'); // Calculate path
+console.log(`Serving static files from: ${publicDirPath}`); // <-- ADD THIS LOG
+app.use(express.static(publicDirPath)); // Use the variable
+
+
+// app.use(express.static(path.join(__dirname, '../public')));
 
 // API Routes
 app.use('/api', apiRoutes);
 console.log("API routes initialized.");
 // Serve Candidate Page (using job ID as part of the path)
 app.get('/apply/:jobId', (req, res) => {
-    // You could check if jobId exists here if needed
+    console.log(`>>> HIT /apply/:jobId route. Serving candidate.html for ${req.params.jobId}`); // Specific log
     res.sendFile(path.join(__dirname, '../public', 'candidate.html'));
 });
-console.log("Candidate page route initialized.");
  // Serve Candidate Portal (using applicant ID) - needs a unique, secure way
-app.get('/portal/:applicantId', (req, res) => {
-    // Basic check if applicant exists
+ app.get('/portal/:applicantId', (req, res) => {
+    console.log(`>>> HIT /portal/:applicantId route. Serving candidate.html for ${req.params.applicantId}`); // Specific log
     if (dataStore.getApplicant(req.params.applicantId)) {
-         res.sendFile(path.join(__dirname, '../public', 'candidate.html')); // Reuse same HTML, JS handles mode
+         res.sendFile(path.join(__dirname, '../public', 'candidate.html'));
     } else {
-         res.status(404).send('Applicant portal not found.');
+         console.log(`>>> /portal/:applicantId - Applicant not found, sending 404 for ${req.params.applicantId}`);
+         res.status(404).send('Applicant portal not found.'); // Send simple 404 text
     }
 });
 
+// Add a specific root route handler BEFORE the catch-all
+app.get('/', (req, res) => {
+    console.log(`>>> HIT / route explicitly. Serving index.html.`); // Specific log for root
+    res.sendFile(path.join(__dirname, '../public', 'index.html'));
+});
 
-// Catch-all for SPA routing (if using a frontend framework) or just serve index
+// --- Catch-all Route (Serve index.html - MUST BE LAST) ---
 app.get('*', (req, res) => {
+    console.log(`>>> HIT Catch-All (*) route for path: ${req.path}. Serving index.html.`); // Specific log
+    // Ensure this ONLY serves index.html
     res.sendFile(path.join(__dirname, '../public', 'index.html'));
 });
 
