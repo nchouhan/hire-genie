@@ -241,41 +241,88 @@ async function rankApplicantsForJob(job, applicants) {
     // 3. Store results in applicant.rankings[job.id]
 
     console.log(`Ranking ${applicants.length} applicants for job ${job.id}...`);
+    const jobId = job.id;
+    let needsRankingCount = 0;
+    let processingPromises = []; // To run AI calls potentially in parallel
+
     // Placeholder: This needs significant implementation using Gemini for summaries/insights
     // and potentially complex local logic for scoring based on extracted keywords/weights.
 
     for (const applicant of applicants) {
-        if (!applicant.rankings) applicant.rankings = {}; // Initialize if needed
-
-        // --- Simplified Scoring Example (Replace with real logic) ---
-        let overallScore = Math.random() * 50 + 50; // Random score 50-100
-        let skillMatch = Math.random() * 30 + 70;
-        // ... calculate other scores ...
-
-        // --- Generate Summary via Gemini (Example Call) ---
-        const summaryPrompt = `Summarize why applicant ${applicant.name || 'ID '+applicant.id.slice(-4)} is a potential fit (or not) for the ${job.title} role, based on their profile (skills: ${applicant.skills?.map(s=>s.name).join(', ')}, experience: ${applicant.workExperience?.length} roles). Highlight strengths and potential gaps regarding required skills: ${job.jdKeywords?.requiredSkills?.map(s=>s.skill).join(', ')}. Be concise (1-2 sentences).`;
-        let generatedSummary = "AI summary generation pending.";
-        try {
-             generatedSummary = await callGeminiAPI(summaryPrompt);
-             // Limit length if needed
-             generatedSummary = generatedSummary.substring(0, 250) + (generatedSummary.length > 250 ? '...' : '');
-        } catch (summaryError) {
-             console.error("Failed to generate summary for applicant", applicant.id, summaryError);
+        // --- Check if ranking for THIS job already exists and seems valid ---
+        // (Add more checks if needed - e.g., check timestamp if ranks expire)
+        if (applicant && applicant.rankings && applicant.rankings[jobId] && applicant.rankings[jobId].overallScore !== undefined) {
+            console.log(` > Applicant ${applicant.id}: Ranking already exists.`);
+            continue; // Skip to the next applicant
         }
 
+        // --- Applicant needs ranking ---
+        needsRankingCount++;
+        console.log(` > Applicant ${applicant.id}: Needs ranking/re-ranking.`);
 
-        applicant.rankings[job.id] = {
-            overallScore: Math.round(overallScore),
-            skillMatch: Math.round(skillMatch),
-            experienceRelevance: Math.round(Math.random() * 40 + 60), // Placeholder
-            achievementImpact: Math.round(Math.random() * 50 + 50), // Placeholder
-            educationCerts: Math.round(Math.random() * 50 + 50), // Placeholder
-            innovationPotential: Math.round(Math.random() * 40 + 50), // Placeholder
-            generatedSummary: generatedSummary,
-            isHiddenGem: Math.random() > 0.9 // Placeholder 10% chance
-        };
-        dataStore.updateApplicant(applicant); // Save ranking to applicant
-    }
+        // --- Prepare the actual ranking call (potentially parallel) ---
+        // This is still conceptual - you need the detailed comparison logic here
+        // It should calculate individual scores and call Gemini ONLY for the summary
+        const rankPromise = (async () => { // Wrap in async IIFE for parallel execution
+            try {
+                // SIMPLIFIED SCORING (Replace with actual logic comparing applicant data to job.jdKeywords)
+                let overallScore = Math.random() * 50 + 50;
+                let skillMatch = Math.random() * 30 + 70;
+                // ... calculate other scores ...
+
+                // Generate Summary via Gemini (Only for those needing ranking)
+                const summaryPrompt = `Summarize why applicant ${applicant.name || 'ID '+applicant.id.slice(-4)} is a potential fit (or not) for the ${job.title} role, based on their profile (skills: ${applicant.skills?.map(s=>s.name).join(', ')}, experience: ${applicant.workExperience?.length} roles). Highlight strengths and potential gaps regarding required skills: ${job.jdKeywords?.requiredSkills?.map(s=>s.skill).join(', ')}. Be concise (1-2 sentences).`;
+                let generatedSummary = "AI summary generation failed."; // Default on error
+                 try {
+                     generatedSummary = await callGeminiAPI(summaryPrompt);
+                     generatedSummary = generatedSummary.substring(0, 250) + (generatedSummary.length > 250 ? '...' : '');
+                 } catch (summaryError) {
+                     console.error("Failed to generate summary for applicant", applicant.id, summaryError);
+                 }
+
+                // Structure the ranking data
+                const newRanking = {
+                    overallScore: Math.round(overallScore),
+                    skillMatch: Math.round(skillMatch),
+                    experienceRelevance: Math.round(Math.random() * 40 + 60),
+                    achievementImpact: Math.round(Math.random() * 50 + 50),
+                    educationCerts: Math.round(Math.random() * 50 + 50),
+                    innovationPotential: Math.round(Math.random() * 40 + 50),
+                    generatedSummary: generatedSummary,
+                    isHiddenGem: Math.random() > 0.9,
+                    rankedAt: new Date().toISOString() // Add timestamp
+                };
+
+                // Update the applicant object IN MEMORY first
+                if (!applicant.rankings) applicant.rankings = {};
+                applicant.rankings[jobId] = newRanking;
+
+                // Persist the change to the data store
+                dataStore.updateApplicant(applicant); // Save the updated applicant with new ranking
+                console.log(` > Applicant ${applicant.id}: Ranking calculated and saved.`);
+
+            } catch (rankingError) {
+                console.error(`Failed to rank applicant ${applicant.id}:`, rankingError);
+                // Optionally store an error state in applicant.rankings[jobId]
+            }
+        })(); // Immediately invoke the async function
+
+        processingPromises.push(rankPromise);
+
+    } 
+    if (processingPromises.length > 0) {
+        console.log(`Waiting for ${processingPromises.length} ranking processes to complete...`);
+        await Promise.all(processingPromises);
+        console.log("All ranking processes finished.");
+        // Re-fetch applicants from datastore AFTER saving to ensure consistency? Or trust in-memory update?
+        // For simplicity now, we trust the in-memory update:
+        // return applicants;
+        // Safer: Refetch the updated list
+         return dataStore.getApplicantsForJob(jobId);
+   } else {
+       console.log("No applicants needed ranking.");
+       return applicants; // Return the original list if no ranking was needed
+   }
 
     // Return applicants (potentially sorted, though sorting is done on frontend route)
     return applicants;
@@ -580,6 +627,7 @@ async function getJobDescriptionSuggestions(jobData) {
 }
 
 module.exports = {
+    callGeminiAPI,
     enhanceJobDescription,
     assessCandidate,
     candidateChat,

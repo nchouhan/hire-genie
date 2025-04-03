@@ -190,81 +190,113 @@
                         <p>Loading ranked applicants...</p>
                     </div>
                 </div>
+                <!-- END: Ranked Applicant List View -->
 
-                <!-- 6. Ranking Graph View (Placeholder) -->
+                <!-- 6. Ranking Graph View -->
                 <div id="ranking-graph-view" class="view">
                     <button id="back-to-ranked-list-btn" class="btn back-btn"><span class="material-icons">arrow_back</span> Back to List</button>
-                     <h2>Ranking Visualization</h2>
-                     <div id="ranking-chart-container" style="min-height: 400px; border: 1px dashed #ccc; display: flex; align-items: center; justify-content: center;">
-                        <p>Graph Placeholder (Requires Charting Library)</p>
+                    <h2 id="ranking-graph-title">Ranking Visualization for: Job Title</h2> <!-- Dynamic title -->
+                    <div id="ranking-chart-container" style="position: relative; height:60vh; width:80vw; margin: auto;"> <!-- Adjust height/width -->
+                        <!-- Canvas element for Chart.js -->
+                        <canvas id="rankingChart"></canvas>
+                        <!-- End Canvas -->
                     </div>
+                    <p style="text-align: center; margin-top: 1rem; color: var(--text-secondary);">Hover over points/bars for details.</p>
                 </div>
+                <!-- END: Ranking Graph View -->
 
                 <!-- 7. Applicant Profile View (Single Correct Version) -->
-                <div id="applicant-details-view" class="view applicant-profile-grid">
-                     <button id="back-to-ranked-list-from-profile-btn" class="btn back-btn"><span class="material-icons">arrow_back</span> Back to Ranked List</button>
+                <div id="applicant-details-view" class="view">
+                    <button id="back-to-ranked-list-from-profile-btn" class="btn back-btn" style="margin-bottom: 1rem;">
+                        <span class="material-icons">arrow_back</span> Back to Ranked List
+                     </button>
+                     <!--Start Grid Comtainer-->
+                    <div class="applicant-profile-grid">
+                     
+                        <!-- Left Column: Parsed Data -->
+                        <div class="profile-column profile-data-column">
+                            <h3 id="profile-applicant-name">Applicant Name</h3>
+                            <p class="subtle-text"><span id="profile-applicant-email">email</span> | <span id="profile-applicant-phone">phone</span></p>
+                            <a id="profile-applicant-resume" href="#" target="_blank" class="btn secondary-btn btn-small" style="display: none;">View Original Resume</a>
 
-                     <!-- Left Column: Parsed Data -->
-                     <div class="profile-column profile-data-column">
-                        <h3 id="profile-applicant-name">Applicant Name</h3>
-                        <p class="subtle-text"><span id="profile-applicant-email">email</span> | <span id="profile-applicant-phone">phone</span></p>
-                        <a id="profile-applicant-resume" href="#" target="_blank" class="btn secondary-btn btn-small" style="display: none;">View Original Resume</a>
-
-                        <div class="profile-section">
-                            <h5>AI Summary</h5>
-                            <p id="profile-summary" class="section-content italic-text">Loading...</p>
+                            <div class="profile-section">
+                                <h5>AI Summary</h5>
+                                <p id="profile-summary" class="section-content italic-text">Loading...</p>
+                            </div>
+                            <div class="profile-section">
+                                <h5>Work Experience</h5>
+                                <div id="profile-experience-list" class="section-content timeline">Loading...</div>
+                            </div>
+                            <div class="profile-section">
+                                <h5>Skills</h5>
+                                <div id="profile-skills-list" class="section-content skills-container">Loading...</div>
+                            </div>
+                            <div class="profile-section">
+                                <h5>Education</h5>
+                                <div id="profile-education-list" class="section-content">Loading...</div>
+                            </div>
+                            <!-- TODO: Add Certifications/Links sections here -->
                         </div>
-                         <div class="profile-section">
-                             <h5>Work Experience</h5>
-                             <div id="profile-experience-list" class="section-content timeline">Loading...</div>
-                         </div>
-                          <div class="profile-section">
-                             <h5>Skills</h5>
-                             <div id="profile-skills-list" class="section-content skills-container">Loading...</div>
-                         </div>
-                          <div class="profile-section">
-                             <h5>Education</h5>
-                             <div id="profile-education-list" class="section-content">Loading...</div>
-                         </div>
-                         <!-- TODO: Add Certifications/Links sections here -->
-                     </div>
 
                      <!-- Right Column: AI Insights & Collaboration -->
-                     <div class="profile-column profile-insights-column">
-                         <div class="profile-section">
-                             <h5>AI Fitment Analysis</h5>
-                              <div id="profile-ranking-chart-placeholder" style="height: 150px; border: 1px dashed #eee; margin-bottom: 1rem; text-align: center; padding-top: 60px;">Radar Chart Placeholder</div>
-                             <p><strong>Overall Score:</strong> <span id="profile-overall-score">--</span>%</p>
-                             <p id="profile-ai-summary" class="section-content">Loading insights...</p>
-                              <ul class="score-details">
-                                  <li>Skill Match: <span id="profile-skill-score">--</span>%</li>
-                                  <li>Experience: <span id="profile-exp-score">--</span>%</li>
-                                  <!-- ... other scores ... -->
-                              </ul>
-                              <p id="profile-hidden-gem" style="color: var(--google-yellow); font-weight: 500; display: none;">Potential Hidden Gem!</p>
-                         </div>
-
-                         <div class="profile-section">
-                             <h5>Interview Prep</h5>
-                             <button id="generate-interview-questions-btn" class="btn secondary-btn">Generate Questions</button>
-                             <ul id="interview-questions-list" class="section-content job-list-items" style="margin-top: 1rem;">
-                                 <!-- Questions loaded here -->
-                             </ul>
-                         </div>
-
-                         <div class="profile-section">
-                             <h5>Team Collaboration (Placeholder)</h5>
-                             <textarea placeholder="Add internal notes..." rows="3" style="margin-bottom: 0.5rem;"></textarea>
-                             <select style="margin-bottom: 0.5rem;">
-                                 <option>Vote: (Select)</option>
-                                 <option value="yes">Yes</option>
-                                 <option value="no">No</option>
-                                 <option value="maybe">Maybe</option>
-                             </select>
-                             <input type="text" placeholder="Tag colleagues (@mention)">
-                         </div>
-                     </div>
-                 </div>
+                        <div class="profile-column profile-insights-column">
+                            <!-- Moved AI Fitment to be just another section -->
+                            <div class="profile-section">
+                                <h5>AI Fitment Analysis</h5>
+                                <div class="fitment-summary"> <!-- Wrapper for scores/summary -->
+                                <p><strong>Overall Score:</strong> <span id="profile-overall-score" class="score-value">--</span>%</p>
+                                <!-- Add small radar chart placeholder if desired -->
+                                <!-- <div id="profile-ranking-chart-placeholder" style="height: 100px; width: 100px; margin: 0.5rem auto;">Chart</div> -->
+                                    <p id="profile-ai-summary" class="section-content ai-summary-text">Loading insights...</p>
+                                    <button id="regenerate-summary-btn" class="btn secondary-btn btn-small" style="display: none; margin-top: 5px;">
+                                    <span class="material-icons" style="font-size: 1em; margin-right: 3px;">refresh</span> Regenerate
+                                </button>
+                                </div>
+                                <ul class="score-details">
+                                    <li>Skill Match: <span id="profile-skill-score">--</span>%</li>
+                                    <li>Experience: <span id="profile-exp-score">--</span>%</li>
+                                    <!-- ... other scores ... -->
+                                </ul>
+                                <p id="profile-hidden-gem" style="color: var(--google-yellow); font-weight: 500; display: none; margin-top: 0.5rem;">
+                                    <span class="material-icons" style="font-size: 1.1em; vertical-align: bottom;">star_border</span> Potential Hidden Gem!
+                                </p>
+                            </div>
+            
+                            <div class="profile-section">
+                                <h5>Interview Prep</h5>
+                                <button id="generate-interview-questions-btn" class="btn secondary-btn">Generate Questions</button>
+                                <ul id="interview-questions-list" class="section-content job-list-items" style="margin-top: 1rem;"></ul>
+                            </div>
+            
+                            <div class="profile-section">
+                                <h5>Team Collaboration (Placeholder)</h5>
+                                <textarea placeholder="Add internal notes..." rows="3" style="margin-bottom: 0.5rem;"></textarea>
+                                <select style="margin-bottom: 0.5rem;"> <option>Vote: (Select)</option> <option value="yes">Yes</option> <option value="no">No</option> <option value="maybe">Maybe</option> </select>
+                                <input type="text" placeholder="Tag colleagues (@mention)">
+                            </div>
+                            <!-- ===  RECRUITER CHAT  === -->
+                            <div class="profile-section ai-chat-section">
+                                <h5>AI Assistant - Candidate Assessment</h5>
+                                <div id="recruiter-chat-history" class="chat-history">
+                                    <!-- Messages will appear here -->
+                                    <p>Ask the AI about this candidate's profile relative to the job...</p>
+                                </div>
+                                <form id="recruiter-chat-form">
+                                    <!-- Hidden inputs are important - ensure they get populated -->
+                                    <input type="hidden" id="ai-chat-applicant-id">
+                                    <input type="hidden" id="ai-chat-job-id">
+                                    <input type="text" id="recruiter-chat-input" placeholder="Ask AI about this candidate..." required>
+                                    <button type="submit" class="btn primary-btn">
+                                    <span class="material-icons">send</span>
+                                </button>
+                                </form>
+                            </div>
+                            <!-- === END RECRUITER CHAT === -->
+                        </div>
+                        <!-- End of right column -->
+                    </div>
+                    <!--End Grid container-->
+                </div>
                  <!-- === END: Applicant Profile View === -->
                 <!-- === ADD ERROR VIEW HERE === -->
                 <div id="error-view" class="view">
@@ -279,7 +311,7 @@
     </div> <!-- End #app-container -->
 
     <script src="/app.js"></script> <!-- Root relative path -->
-    <!-- Optional: Add Chart.js library if implementing graphs -->
-    <!-- <script src="https://cdn.jsdelivr.net/npm/chart.js"></script> -->
+    <!-- Include Chart.js for graphing -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 </body>
 </html>

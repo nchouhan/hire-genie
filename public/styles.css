@@ -212,6 +212,27 @@ header {
     border-radius: 50%;
     animation: spin 1s linear infinite;
 }
+#ranking-graph-view {
+    /* Basic view styles */
+}
+
+#ranking-chart-container {
+    position: relative; /* Important for Chart.js responsiveness */
+    /* height/width set inline or here */
+    /* height: 60vh; */
+    /* width: 80%; */ /* Use percentage or vw */
+    /* max-width: 900px; */ /* Optional max width */
+    margin: 1.5rem auto; /* Center the chart area */
+    padding: 1rem;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    background-color: var(--background-white);
+}
+
+#ranking-graph-title {
+    text-align: center;
+    margin-bottom: 1.5rem;
+}
 
 @keyframes spin {
     to { transform: rotate(360deg); }
@@ -568,6 +589,15 @@ hr {
     color: var(--text-secondary);
     font-weight: 500;
 }
+.profile-insights-column .ai-chat-section {
+    /* Inherits .profile-section styles (padding-bottom, margin-bottom, border-bottom) */
+    /* Add specific overrides if needed */
+}
+
+.ai-chat-section h5 {
+    /* Inherits .profile-section h5 styles */
+}
+    
 #recruiter-chat-form, #candidate-chat-form {
     display: flex;
     gap: 0.5rem;
@@ -1019,7 +1049,18 @@ hr {
 .view.active {
     display: block; /* Or 'flex', 'grid' if the view's internal layout needs it */
 }
-
+/* --- SPECIFIC rule for the Applicant Profile Grid Layout --- */
+/* Apply grid ONLY when the view is active */
+.view.active#applicant-details-view .applicant-profile-grid {
+    display: grid;
+    grid-template-columns: minmax(300px, 2fr) minmax(250px, 1fr); /* Keep your column setup */
+    gap: 2rem;
+}
+.view.active.applicant-profile-grid {
+    display: grid;
+    grid-template-columns: minmax(300px, 2fr) minmax(250px, 1fr);
+    gap: 2rem;
+}
 /* --- Applicant Upload View --- */
 .submit-card {
     max-width: 600px; /* Limit width of upload form */
@@ -1162,6 +1203,19 @@ hr {
      padding: 0.4rem 0.8rem; /* Smaller button padding */
 }
 
+.list-controls .btn.anonymized-active {
+    background-color: rgba(66, 133, 244, 0.1); /* Light blue wash like secondary hover */
+    border-color: var(--google-blue); /* Blue border */
+    color: var(--google-blue); /* Blue text */
+}
+
+/* --- Applicant Profile View Enhancements --- */
+#applicant-details-view .btn.back-btn {
+    margin-bottom: 1rem; /* Ensure space below back button */
+    display: inline-flex; /* Override any block display */
+    width: auto; /* Don't force full width */
+}
+
 #ranked-applicant-list-container {
     /* Styles for table or cards would go here */
     /* Example for basic table */
@@ -1199,11 +1253,7 @@ hr {
 
 
 /* --- HM - Candidate Profile View --- */
-.applicant-profile-grid {
-    display: grid;
-    grid-template-columns: minmax(300px, 2fr) minmax(250px, 1fr); /* Adjust ratios */
-    gap: 2rem; /* Gap between columns */
-}
+
 .profile-column {
     /* Basic styling for columns */
 }
@@ -1216,11 +1266,47 @@ hr {
     border-radius: var(--border-radius);
     border: 1px solid var(--border-color);
 }
-.profile-insights-column .profile-section {
-     padding-bottom: 1rem; margin-bottom: 1rem; border-bottom: 1px solid #d0d2d6; /* Separators inside insights */
+/* Style AI Fitment Section within Insights Column */
+.profile-insights-column .profile-section { /* Common styling for sections in right col */
+    padding-bottom: 1rem;
+    margin-bottom: 1rem;
+    border-bottom: 1px solid #d0d2d6;
 }
 .profile-insights-column .profile-section:last-child { border-bottom: none;}
+.fitment-summary { /* Wrapper for score/summary */
+    margin-bottom: 1rem;
+}
+.fitment-summary .score-value {
+    font-weight: 500;
+    font-size: 1.1em;
+    color: var(--text-primary);
+}
+.ai-summary-text { /* Specific style for the summary paragraph */
+    margin-top: 0.5rem;
+    font-size: var(--small-font-size);
+    color: var(--text-secondary);
+    line-height: 1.5;
+}
 
+#regenerate-summary-btn { /* Style regenerate button */
+    margin-top: 0.75rem !important; /* Override default btn margin if needed */
+    padding: 0.3rem 0.6rem; /* Smaller button */
+}
+
+.score-details { /* Style the bullet points for scores */
+    list-style: none;
+    padding-left: 0;
+    font-size: var(--small-font-size);
+    color: var(--text-secondary);
+    margin-top: 1rem;
+}
+.score-details li { margin-bottom: 0.3rem; }
+
+#profile-hidden-gem .material-icons { /* Style hidden gem icon */
+    font-size: 1.1em;
+    vertical-align: bottom;
+    margin-right: 4px;
+}
 .timeline .work-experience-item { /* Add timeline styles if desired */
     position: relative; padding-left: 20px; border-left: 2px solid var(--border-color); margin-left: 5px; padding-bottom: 1rem;
 }

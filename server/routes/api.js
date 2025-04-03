@@ -439,6 +439,55 @@ router.post('/applicants/confirm', async (req, res) => {
     }
 });
 
+router.post('/ai/regenerate-summary', async (req, res) => {
+    try {
+        const { applicantId, jobId } = req.body;
+
+        if (!applicantId || !jobId) {
+            return res.status(400).json({ message: 'Applicant ID and Job ID are required.' });
+        }
+
+        const applicant = dataStore.getApplicant(applicantId);
+        const job = dataStore.getJob(jobId);
+
+        if (!applicant || !job) {
+            return res.status(404).json({ message: 'Applicant or Job not found.' });
+        }
+
+        console.log(`Regenerating summary for Applicant: ${applicantId}, Job: ${jobId}`);
+
+        // --- Call Gemini specifically for the summary ---
+        const summaryPrompt = `Summarize why applicant ${applicant.name || 'ID '+applicant.id.slice(-4)} is a potential fit (or not) for the ${job.title} role, based on their profile (skills: ${applicant.skills?.map(s=>s.name).join(', ')}, experience: ${applicant.workExperience?.length} roles). Highlight strengths and potential gaps regarding required skills: ${job.jdKeywords?.requiredSkills?.map(s=>s.skill).join(', ')}. Be concise (1-2 sentences).`;
+        console.log("Summary Prompt:", summaryPrompt);
+        let generatedSummary = "AI summary regeneration failed."; // Default on error
+        try {
+             generatedSummary = await geminiService.callGeminiAPI(summaryPrompt); // Use base call
+             generatedSummary = generatedSummary.substring(0, 250) + (generatedSummary.length > 250 ? '...' : '');
+             console.log("Regenerated Summary:", generatedSummary);
+        } catch (summaryError) {
+             console.error("Failed to regenerate summary for applicant", applicantId, summaryError);
+             // Keep default error message
+        }
+
+        // --- Update the applicant's ranking data ---
+        if (!applicant.rankings) applicant.rankings = {};
+        if (!applicant.rankings[jobId]) applicant.rankings[jobId] = {}; // Ensure job ranking object exists
+        applicant.rankings[jobId].generatedSummary = generatedSummary;
+        applicant.rankings[jobId].rankedAt = new Date().toISOString(); // Update timestamp
+
+        dataStore.updateApplicant(applicant); // Save the updated applicant
+
+        res.status(200).json({
+            applicantId: applicantId,
+            jobId: jobId,
+            newSummary: generatedSummary
+        }); // Send back the new summary
+
+    } catch (error) {
+        console.error("Error regenerating summary:", error);
+        res.status(500).json({ message: 'Failed to regenerate summary.' });
+    }
+});
 // --- Get Ranked Applicants for a Job ---
 router.get('/jobs/:jobId/applicants/ranked', async (req, res) => {
     try {

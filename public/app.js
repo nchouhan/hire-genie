@@ -28,9 +28,16 @@ function capitalizeFirstLetter(string) {
 document.addEventListener('DOMContentLoaded', () => {
     console.log("app.js: DOMContentLoaded fired, initializing app.");
     // --- Get References to Splash and App Container ---
+    let rankingChartInstance = null; // Store chart instance for later use
     const splashScreen = document.getElementById('splash-screen');
     const appContainer = document.getElementById('app-container');
     // --- DOM Elements ---
+    const showRankingGraphBtn = document.getElementById('show-ranking-graph-btn');
+    const rankingGraphView = document.getElementById('ranking-graph-view');
+    const rankingGraphTitle = document.getElementById('ranking-graph-title');
+    const rankingChartCanvas = document.getElementById('rankingChart');
+    const backToRankedListBtn = document.getElementById('back-to-ranked-list-btn');
+
     const createJobBtn = document.getElementById('create-job-btn');
     const jobListDiv = document.getElementById('job-list');
     const createJobView = document.getElementById('create-job-view');
@@ -125,15 +132,13 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Add New DOM Element References ---
     const jobConfigSection = document.getElementById('job-config-section'); // Placeholder
     const rankedListView = document.getElementById('ranked-list-view');
-    const rankingGraphView = document.getElementById('ranking-graph-view');
     const rankedListContainer = document.getElementById('ranked-applicant-list-container');
     const rankedListTitle = document.getElementById('ranked-list-title');
     const applicantSearchInput = document.getElementById('applicant-search');
     const applicantSortSelect = document.getElementById('applicant-sort');
     const toggleAnonymizeBtn = document.getElementById('toggle-anonymize-btn');
-    const showRankingGraphBtn = document.getElementById('show-ranking-graph-btn');
     const backToJobConfigBtn = document.getElementById('back-to-job-config-btn');
-    const backToRankedListBtn = document.getElementById('back-to-ranked-list-btn');
+    
     const backToRankedListFromProfileBtn = document.getElementById('back-to-ranked-list-from-profile-btn');
     // Profile View Elements
     const profileDataColumn = document.querySelector('.profile-data-column');
@@ -158,6 +163,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const interviewQuestionsList = document.getElementById('interview-questions-list');
     const viewRankedApplicantsBtn = document.getElementById('view-ranked-applicants-btn'); // Button on job details
     const errorMessageContentP = document.getElementById('error-message-content');
+    const regenerateSummaryBtn = document.getElementById('regenerate-summary-btn');
+
 
     // --- State ---
     let jobsData = {}; // { jobId: jobObject }
@@ -172,7 +179,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let applicantId = null;
     let currentRankedApplicants = []; // Cache for ranked list
     let anonymizedView = false; // Track anonymization state
-
+    let recruiterAiChatHistory = {}; // Store chat history for each applicant
 
     if (splashScreen && appContainer) {
         // Set timeout for splash screen
@@ -267,44 +274,68 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
     
+    function clearRecruiterChat(applicantId) {
+        // Ensure element ref is valid within this scope or re-select if needed
+        const chatDiv = document.getElementById('recruiter-chat-history');
+        if (chatDiv) chatDiv.innerHTML = '<p>Ask the AI about this candidate...</p>'; // Clear UI with placeholder
+
+        if (recruiterAiChatHistory[applicantId]) { // Access global state variable
+            delete recruiterAiChatHistory[applicantId]; // Clear stored history
+            console.log(`Cleared chat history state for applicant ${applicantId}`);
+        }
+    }
     // Also verify the call site in the recruiterChatForm submit listener:
     // Make sure the object passed as the body is correct
     
-    if (recruiterChatForm) {
+   // --- Recruiter Chat Form Listener ---
+   if (recruiterChatForm) {
+    // The recruiterAiChatHistory variable is now accessible from the outer scope
         recruiterChatForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             const applicantId = aiChatApplicantIdInput.value;
             const jobId = aiChatJobIdInput.value;
             const question = recruiterChatInput.value.trim();
-    
+
             if (!question || !applicantId || !jobId) return;
-    
+
+            // Manage history using the recruiterAiChatHistory from the outer scope
+            if (!recruiterAiChatHistory[applicantId]) {
+                recruiterAiChatHistory[applicantId] = [];
+            }
+            const currentHistory = recruiterAiChatHistory[applicantId];
+            currentHistory.push({ role: 'user', parts: [{ text: question }] });
+            const MAX_HIST = 8;
+            if (currentHistory.length > MAX_HIST) {
+                recruiterAiChatHistory[applicantId] = currentHistory.slice(-MAX_HIST);
+            }
+
             addChatMessage(recruiterChatHistoryDiv, 'user', question);
             recruiterChatInput.value = '';
             recruiterChatInput.disabled = true;
-    
+
             try {
-                // --- Ensure this body object is correct ---
-                const requestBody = { applicantId, jobId, question };
-                console.log("Sending assessment request body:", requestBody); // Log body object
-                // --- Call apiRequest ---
-                const response = await apiRequest('/api/ai/assess-candidate', 'POST', requestBody); // Pass the object directly
-                // --- Check Response ---
-                if (response && response.assessment) { // Check if response and assessment exist
-                     addChatMessage(recruiterChatHistoryDiv, 'model', response.assessment);
+                const requestBody = { applicantId, jobId, question, history: recruiterAiChatHistory[applicantId] };
+                const response = await apiRequest('/api/ai/assess-candidate', 'POST', requestBody);
+
+                if (response && response.assessment) {
+                    addChatMessage(recruiterChatHistoryDiv, 'model', response.assessment);
+                    recruiterAiChatHistory[applicantId].push({ role: 'model', parts: [{ text: response.assessment }] });
+                    if (recruiterAiChatHistory[applicantId].length > MAX_HIST) {
+                        recruiterAiChatHistory[applicantId] = recruiterAiChatHistory[applicantId].slice(-MAX_HIST);
+                    }
                 } else {
-                     console.warn("Received unexpected response from /api/ai/assess-candidate:", response);
-                     addChatMessage(recruiterChatHistoryDiv, 'model', "Received an empty or invalid response from the AI assistant.");
+                    console.warn("Unexpected response from /api/ai/assess-candidate:", response);
+                    addChatMessage(recruiterChatHistoryDiv, 'model', "Received empty/invalid response.");
                 }
             } catch (error) {
-                // apiRequest should have already alerted/logged
                 addChatMessage(recruiterChatHistoryDiv, 'model', `Error: Could not get assessment.`);
             } finally {
                 recruiterChatInput.disabled = false;
                 recruiterChatInput.focus();
             }
         });
-    }
+    } // End if(recruiterChatForm)
+    
     // --- Drag & Drop Logic ---
     if (uploadDropZone && resumeFileInput) {
         uploadDropZone.addEventListener('click', () => resumeFileInput.click());
@@ -424,7 +455,7 @@ document.addEventListener('DOMContentLoaded', () => {
        if (applicant.education && applicant.education.length > 0) {
             applicant.education.forEach(edu => {
                 const p = document.createElement('p');
-                p.innerHTML = `<strong>${escapeHtml(edu.degree || 'Degree N/A')}</strong> - ${escapeHtml(edu.institution || 'Institution N/A')} <em>(${escapeHtml(edu.duration || 'N/A')})</em>`;
+                p.innerHTML = `<strong>${escapeHtml(edu.degree || 'Degree N/A')}</strong> - ${escapeHtml(edu.major || 'Institution N/A')} <em>(${escapeHtml(edu.duration || 'N/A')})</em>`;
                 portalEducationDiv.appendChild(p);
             });
        } else { portalEducationDiv.innerHTML = '<p>No education parsed.</p>'; }
@@ -450,7 +481,25 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- UI Logic ---
     function showView(viewId) {
+        console.log(`Switching view to: ${viewId}`);
+
+        // --- START: Destroy Chart Logic ---
+        // If navigating AWAY from the graph view, destroy the chart instance
+        if (rankingChartInstance && viewId !== 'ranking-graph-view') {
+            console.log("Destroying previous chart instance.");
+            rankingChartInstance.destroy();
+            rankingChartInstance = null;
+        }
+        // --- END: Destroy Chart Logic ---
+
         document.querySelectorAll('.view').forEach(view => view.classList.remove('active'));
+        // --- Add Clearing Logic ---
+        // If we are NOT showing the applicant details view, clear its potentially stale content
+        if (viewId !== 'applicant-details-view') {
+            clearApplicantProfilePlaceholders(); // Call helper function
+        }
+        // --- End Clearing Logic ---
+
         const viewToShow = document.getElementById(viewId);
         if (viewToShow) {
             viewToShow.classList.add('active');
@@ -459,6 +508,170 @@ document.addEventListener('DOMContentLoaded', () => {
             console.warn(`View ID "${viewId}" not found, showing welcome view.`);
             if (welcomeView) welcomeView.classList.add('active'); // Ensure welcomeView exists
         }
+    }
+    // --- Ranking Graph Logic ---
+    function renderRankingGraph(applicants, jobTitle) {
+        if (!rankingChartCanvas) {
+            console.error("Canvas element #rankingChart not found!");
+            return;
+        }
+        // Update graph title
+        if(rankingGraphTitle) rankingGraphTitle.textContent = `Ranking Visualization for: ${escapeHtml(jobTitle || 'Selected Job')}`;
+
+        // Destroy previous chart if it exists
+        if (rankingChartInstance) {
+            rankingChartInstance.destroy();
+            rankingChartInstance = null;
+            console.log("Destroyed existing chart before rendering new one.");
+        }
+
+        if (!applicants || applicants.length === 0) {
+            console.log("No applicant data to render graph.");
+            // Optionally display a message on the canvas context
+            const ctx = rankingChartCanvas.getContext('2d');
+            ctx.clearRect(0, 0, rankingChartCanvas.width, rankingChartCanvas.height); // Clear canvas
+            ctx.textAlign = 'center';
+            ctx.fillStyle = '#666';
+            ctx.fillText("No applicant data available for graph.", rankingChartCanvas.width / 2, 50);
+            return;
+        }
+
+        // --- Prepare Data for Chart.js (Example: Radar Chart) ---
+        // Limit number of applicants shown for readability?
+        const applicantsToShow = applicants.slice(0, 15); // Show top 15
+
+        const labels = applicantsToShow.map(app => anonymizedView ? `Candidate ${app.id?.slice(-4)}` : app.name); // Use anonymized name if needed
+
+        // Define the datasets (categories to plot)
+        const datasets = [
+            {
+                label: 'Overall Score',
+                data: applicantsToShow.map(app => app.overallScore ?? 0),
+                borderColor: 'rgba(66, 133, 244, 0.8)', // Google Blue
+                backgroundColor: 'rgba(66, 133, 244, 0.2)',
+                pointBackgroundColor: 'rgba(66, 133, 244, 1)',
+                pointBorderColor: '#fff',
+                pointHoverBackgroundColor: '#fff',
+                pointHoverBorderColor: 'rgba(66, 133, 244, 1)',
+                // tension: 0.1 // Optional line tension
+            },
+            {
+                label: 'Skill Match',
+                data: applicantsToShow.map(app => app.skillMatch ?? 0),
+                borderColor: 'rgba(52, 168, 83, 0.8)', // Google Green
+                backgroundColor: 'rgba(52, 168, 83, 0.2)',
+                pointBackgroundColor: 'rgba(52, 168, 83, 1)',
+                pointBorderColor: '#fff',
+                pointHoverBackgroundColor: '#fff',
+                pointHoverBorderColor: 'rgba(52, 168, 83, 1)',
+            },
+            {
+                label: 'Experience',
+                data: applicantsToShow.map(app => app.experienceRelevance ?? 0),
+                borderColor: 'rgba(251, 188, 5, 0.8)', // Google Yellow
+                backgroundColor: 'rgba(251, 188, 5, 0.2)',
+                pointBackgroundColor: 'rgba(251, 188, 5, 1)',
+                pointBorderColor: '#fff',
+                pointHoverBackgroundColor: '#fff',
+                pointHoverBorderColor: 'rgba(251, 188, 5, 1)',
+            }
+            // Add more datasets for other ranking categories if desired
+        ];
+
+        // --- Create Chart ---
+        const ctx = rankingChartCanvas.getContext('2d');
+        rankingChartInstance = new Chart(ctx, {
+            type: 'radar', // Or 'bar', 'bubble', etc.
+            data: {
+                labels: labels,
+                datasets: datasets
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false, // Important for sizing within container
+                scales: {
+                    r: { // Options for the radial axis (the spokes)
+                        beginAtZero: true,
+                        max: 100, // Assuming scores are percentages
+                        angleLines: { display: true, color: 'rgba(0, 0, 0, 0.1)' },
+                        grid: { color: 'rgba(0, 0, 0, 0.1)' },
+                        pointLabels: { // Labels for each applicant on the axis points
+                            font: { size: 10 }
+                        },
+                        ticks: { // Labels on the scale (0, 20, 40...)
+                           backdropColor: 'rgba(255, 255, 255, 0.75)', // Background for ticks
+                           stepSize: 20
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        position: 'top',
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                // Customize tooltip display
+                                let label = context.dataset.label || '';
+                                if (label) {
+                                    label += ': ';
+                                }
+                                if (context.parsed.r !== null) {
+                                    label += context.parsed.r + '%';
+                                }
+                                return label;
+                            }
+                        }
+                    }
+                }
+                // Add other chart options as needed
+            }
+        });
+        console.log("Chart rendered.");
+    } // End renderRankingGraph
+
+
+    // --- Event Handlers (Add/Modify) ---
+
+    if (showRankingGraphBtn) {
+          showRankingGraphBtn.addEventListener('click', () => {
+              if (selectedJobId && currentRankedApplicants.length > 0) {
+                  console.log("Showing ranking graph...");
+                  renderRankingGraph(currentRankedApplicants, jobsData[selectedJobId]?.title);
+                  showView('ranking-graph-view');
+              } else {
+                  alert("Please select a job and ensure applicants are loaded first.");
+              }
+          });
+      }
+
+     if(backToRankedListBtn) { // Button on Graph View
+         backToRankedListBtn.addEventListener('click', () => {
+            if (selectedJobId) {
+                 showView('ranked-list-view'); // Switch back to list view
+            }
+         });
+    }
+    // --- NEW Helper Function to Clear Placeholders ---
+    function clearApplicantProfilePlaceholders() {
+        console.log("Clearing applicant profile placeholders...");
+        if (profileApplicantName) profileApplicantName.textContent = 'Applicant Name'; // Reset headers
+        if (profileApplicantEmail) profileApplicantEmail.textContent = 'email';
+        if (profileApplicantPhone) profileApplicantPhone.textContent = 'phone';
+        if (profileApplicantResume) { profileApplicantResume.href = '#'; profileApplicantResume.style.display = 'none';}
+        if (profileSummary) profileSummary.textContent = '';
+        if (profileExperienceList) profileExperienceList.innerHTML = '';
+        if (profileSkillsList) profileSkillsList.innerHTML = '';
+        if (profileEducationList) profileEducationList.innerHTML = '';
+        // Right Column
+        if (profileRankingChartPlaceholder) profileRankingChartPlaceholder.innerHTML = 'Radar Chart Placeholder'; // Reset placeholder if needed
+        if (profileOverallScore) profileOverallScore.textContent = '--';
+        if (profileAiSummary) profileAiSummary.textContent = '';
+        if (profileSkillScore) profileSkillScore.textContent = '--';
+        if (profileExpScore) profileExpScore.textContent = '--';
+        // Clear other scores if added to score-details list
+        if (profileHiddenGem) profileHiddenGem.style.display = 'none';
+        if (interviewQuestionsList) interviewQuestionsList.innerHTML = '';
     }
 
     function showError(message) {
@@ -561,9 +774,58 @@ document.addEventListener('DOMContentLoaded', () => {
         showView('job-details-view');
     }
 
-    function selectApplicant(applicantId) {
-         renderApplicantDetails(applicantId); // This also calls showView
-     }
+    async function selectApplicant(applicantId) {
+        if (!selectedJobId) { // Ensure a job context exists
+           console.error("Cannot select applicant, no job selected.");
+           alert("Internal Error: No job context for selected applicant.");
+           return;
+        }
+        console.log(`Selecting applicant ${applicantId} for job ${selectedJobId}`);
+        selectedApplicantId = applicantId;
+    
+        // Show view immediately and clear placeholders
+        showView('applicant-details-view');
+        clearApplicantProfilePlaceholders(); // Use the helper to clear/reset the view
+        clearRecruiterChat(applicantId);
+
+        // Set key loading texts
+        if (profileApplicantName) profileApplicantName.textContent = 'Loading Applicant...';
+        if (profileSummary) profileSummary.textContent = 'Loading summary...';
+        if (profileAiSummary) profileAiSummary.textContent = 'Loading insights...';
+    
+    
+        try {
+            // 1. Fetch FULL parsed data for the applicant
+            console.log(`Fetching parsed data for applicant ${applicantId}...`);
+            // Ensure your backend has the /parsed endpoint implemented
+            const applicantData = await apiRequest(`/api/applicants/${applicantId}/parsed`);
+            console.log("Parsed data received:", JSON.stringify(applicantData, null, 2));
+    
+            // 2. Find the specific RANKING info for THIS applicant (from cached list is best)
+            console.log(`Finding ranking info for applicant ${applicantId} in list:`, currentRankedApplicants);
+            let rankingInfo = currentRankedApplicants.find(app => app.id === applicantId);
+    
+            if (!rankingInfo) {
+                 console.warn(`Ranking info for ${applicantId} not found in cached list.`);
+                 // Fallback: use an empty/default object
+                 rankingInfo = { overallScore: 'N/A', generatedSummary: 'Ranking data missing.', isHiddenGem: false };
+            }
+            console.log("Ranking info found/used:", JSON.stringify(rankingInfo, null, 2));
+    
+    
+            if (!applicantData) {
+                 throw new Error("Failed to load core applicant data.");
+            }
+    
+            // 4. Render the profile using the correct function and data
+            renderCandidateProfile(applicantData, rankingInfo); // CALL THE CORRECT RENDER FUNCTION
+    
+        } catch (error) {
+            console.error(`Error loading/rendering applicant profile ${applicantId}:`, error);
+            showError(`Error loading applicant profile: ${error.message}`);
+            // Optionally revert view if needed
+        }
+    }
 
     function getStageName(stageId) {
         const stage = stagesConfig.find(s => s.id === stageId);
@@ -644,172 +906,194 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // function renderApplicantList(jobId) {
-    //      if (!applicantListDiv) return;
-    //      applicantListDiv.innerHTML = '<p>Loading applicants...</p>';
-    //      const jobApplicants = Object.values(applicantsData).filter(app => app && app.jobId === jobId); // Add check for valid app
-
-    //      if (jobApplicants.length === 0) {
-    //          applicantListDiv.innerHTML = '<p>No applicants for this job yet.</p>';
-    //          return;
-    //      }
-
-    //      applicantListDiv.innerHTML = ''; // Clear loading message
-    //      jobApplicants.sort((a, b) => new Date(b.appliedAt) - new Date(a.appliedAt)).forEach(applicant => {
-    //         if (!applicant || !applicant.id) return; // Skip invalid applicants
-    //          const applicantItem = document.createElement('div');
-    //          applicantItem.classList.add('applicant-item');
-    //          applicantItem.dataset.applicantId = applicant.id;
-    //          applicantItem.innerHTML = `
-    //             <span>${escapeHtml(applicant.name)} (${escapeHtml(applicant.email)})</span>
-    //             <span class="stage">${escapeHtml(getStageName(applicant.currentStageId))}</span>
-    //          `;
-    //          applicantItem.addEventListener('click', () => selectApplicant(applicant.id));
-    //          applicantListDiv.appendChild(applicantItem);
-    //      });
-    //  }
-    //  async function fetchSingleApplicantRanking(applicantId) {
-    //     console.warn("Fetching single applicant ranking - consider including in main ranked list fetch");
-    //     // You might need a specific backend endpoint for this, or adapt the existing one
-    //     // This is just a placeholder concept
-    //     const applicant = dataStore.getApplicant(applicantId); // Example: get from local store (not ideal)
-    //     return applicant ? (applicant.rankings?.[applicant.jobId] || {}) : {};
-    // }
-    function renderApplicantDetails(applicantId) {
-        const applicant = applicantsData[applicantId];
-        if (!applicant || !applicant.jobId) {
-             console.error("Invalid applicant data for rendering details:", applicantId);
-             showView('welcome-view'); // Go back if data is bad
-             return;
-        }
-        const job = jobsData[applicant.jobId];
-        if (!job) {
-            console.error(`Job data missing (jobId: ${applicant.jobId}) for applicant ${applicantId}`);
-            // Decide how to handle - maybe show applicant details without job context?
-            // For now, go back to welcome view.
-            showView('welcome-view');
-            return;
-        }
-        selectedApplicantId = applicantId;
-
-        // Populate basic info
-        applicantNameH2.textContent = applicant.name;
-        applicantEmailSpan.textContent = applicant.email;
-        applicantPhoneSpan.textContent = applicant.phone;
-        applicantResumeLink.href = applicant.resumeLink || '#';
-        applicantResumeLink.textContent = applicant.resumeLink ? 'View Resume' : 'N/A';
-        applicantResumeLink.target = applicant.resumeLink ? '_blank' : '_self';
-        applicantCoverLetterPre.textContent = applicant.coverLetter || 'No cover letter provided.';
-        applicantAppliedAtSpan.textContent = new Date(applicant.appliedAt).toLocaleDateString();
-
-        // Set IDs for forms
-        feedbackApplicantIdInput.value = applicantId;
-        stageChangeApplicantIdInput.value = applicantId;
-        aiChatApplicantIdInput.value = applicantId;
-        aiChatJobIdInput.value = job.id;
-
-        // Render dynamic sections
-        renderLifecycleStages(applicant);
-        renderCurrentStageDetails(applicant);
-        renderRecruiterChatHistory(applicant.id, job.id);
-
-        showView('applicant-details-view');
-    }
-
     function renderCandidateProfile(applicant, ranking) {
-        // --- ADD DETAILED LOGS AT THE START ---
-        console.log("--- renderCandidateProfile ---");
-        console.log("Received Applicant Data:", JSON.stringify(applicant, null, 2)); // Log full applicant structure
-        console.log("Received Ranking Info:", JSON.stringify(ranking, null, 2));   // Log full ranking structure
-        // --- END LOGS ---
-    
+        console.log("Rendering profile with applicant:", applicant, "and ranking:", ranking);
+        console.log(JSON.stringify(applicant, null, 2))
+        console.log(JSON.stringify(ranking, null, 2))
+        const currentApplicantId = applicant?.id || ranking?.id; // Get ID from either object
+        if (!currentApplicantId) {
+           console.error("renderCandidateProfile: Cannot determine Applicant ID from data.");
+           // Optionally show an error and return
+           return;
+       }
         // --- Left Column (Parsed Data from 'applicant' object) ---
-        if(profileApplicantName) profileApplicantName.textContent = anonymizedView ? `Candidate ${applicant?.id?.slice(-4)}` : (applicant?.name || 'N/A'); // Add optional chaining
+        if(profileApplicantName) profileApplicantName.textContent = anonymizedView ? `Candidate ${applicant?.id?.slice(-4)}` : (applicant?.name || 'N/A');
         if(profileApplicantEmail) profileApplicantEmail.textContent = anonymizedView ? '---' : (applicant?.email || 'N/A');
-        // ... (rest of left column population - ADD OPTIONAL CHAINING (?.) where appropriate) ...
+        if(profileApplicantPhone) profileApplicantPhone.textContent = anonymizedView ? '---' : (applicant?.phone || 'N/A');
+        if(profileApplicantResume) {
+            profileApplicantResume.href = applicant?.originalCvPath || '#'; // Use path stored during parsing
+            profileApplicantResume.target = applicant?.originalCvPath ? '_blank' : '_self';
+            profileApplicantResume.style.display = applicant?.originalCvPath ? 'inline-flex' : 'none';
+        }
         if(profileSummary) profileSummary.textContent = applicant?.parsedSummary || 'No summary parsed.';
-    
-        // Call helper renderers
-        if(profileExperienceList) renderWorkExperience(profileExperienceList, applicant?.workExperience); // Pass potentially undefined safely
+        if(profileSummary) profileSummary.classList.toggle('italic-text', !applicant?.parsedSummary);
+
+        // Call helper renderers with data from 'applicant' object
+        if(profileExperienceList) renderWorkExperience(profileExperienceList, applicant?.workExperience);
         if(profileSkillsList) renderSkills(profileSkillsList, applicant?.skills);
         if(profileEducationList) renderEducation(profileEducationList, applicant?.education);
-    
-    
+        // TODO: Render Certs, Links etc.
+
         // --- Right Column (AI Insights & Ranking from 'ranking' object) ---
         if(profileOverallScore) profileOverallScore.textContent = ranking?.overallScore ?? '--';
-        if(profileAiSummary) profileAiSummary.textContent = ranking?.generatedSummary || 'No AI summary available.';
+        if(profileAiSummary) profileAiSummary.textContent = ranking?.summary || 'No AI summary available.';
+        console.log("AI summary text before adding to generated Summary text:", ranking?.generatedSummary);
+        console.log("AI summary text before adding to Summary text:", ranking?.summary);
         if(profileSkillScore) profileSkillScore.textContent = ranking?.skillMatch ?? '--';
         if(profileExpScore) profileExpScore.textContent = ranking?.experienceRelevance ?? '--';
-        // ... (populate other scores with optional chaining ?.) ...
+        // TODO: Populate other scores if available in ranking object
         if(profileHiddenGem) profileHiddenGem.style.display = ranking?.isHiddenGem ? 'block' : 'none';
         if(interviewQuestionsList) interviewQuestionsList.innerHTML = ''; // Clear previous questions
-    
-        console.log("Profile rendering attempt complete.");
-    }
-    // --- NEW: Helper Rendering Functions for Profile ---
-    // function renderWorkExperience(container, experiences) {
-    //     container.innerHTML = ''; // Clear
-    //     if (!experiences || experiences.length === 0) {
-    //         container.innerHTML = '<p>No work experience parsed.</p>'; return;
-    //     }
-    //     experiences.forEach(exp => {
-    //          const div = document.createElement('div');
-    //          div.classList.add('work-experience-item'); // Use timeline styles if desired
-    //          div.innerHTML = `
-    //             <strong>${escapeHtml(exp.company || 'N/A')}</strong> - ${escapeHtml(exp.title || 'N/A')}
-    //             <br><em>${escapeHtml(exp.duration || 'N/A')}, ${escapeHtml(exp.location || 'N/A')}</em>
-    //             ${exp.achievements && exp.achievements.length > 0 ? `<ul class="achievements">${exp.achievements.map(a => `<li>${escapeHtml(a)}</li>`).join('')}</ul>` : ''}
-    //          `;
-    //          container.appendChild(div);
-    //     });
-    // }
+        
+        const summaryText = ranking?.summary || ''; // Default to empty string
+        console.log("AI summary text before adding to textContent Summary text:", summaryText);
+        const summaryIsPendingOrFailed = !summaryText || summaryText.includes("pending") || summaryText.includes("failed"); // Check for indicator phrases
+        if (profileAiSummary) {
+            profileAiSummary.textContent = summaryText || 'No AI summary available.'; // Display current summary or placeholder
+            profileAiSummary.classList.toggle('italic-text', summaryIsPendingOrFailed); // Italicize if pending/failed
+        }
+            // --- Populate Hidden Chat Inputs ---
+            // currentApplicantId = applicant?.id || ranking?.id; // Get ID again for safety
+            const currentJobId = applicant?.jobId || selectedJobId; // Get Job ID (prefer applicant obj, fallback to global)
+
+            if (aiChatApplicantIdInput) aiChatApplicantIdInput.value = currentApplicantId || '';
+            if (aiChatJobIdInput) aiChatJobIdInput.value = currentJobId || '';
+            // --- End Populate ---
+
+            // --- Clear Previous Chat History ---
+            if (recruiterChatHistoryDiv) {
+                recruiterChatHistoryDiv.innerHTML = '<p>Ask the AI about this candidate...</p>'; // Reset placeholder
+            }
+            if(recruiterChatInput) recruiterChatInput.value = ''; // Clear input field
+        const regenerateBtn = document.getElementById('regenerate-summary-btn'); // Get reference
+        if (regenerateBtn) {
+            const summaryText = ranking?.summary || '';
+            const summaryIsPendingOrFailed = !summaryText || summaryText.toLowerCase().includes("pending") || summaryText.toLowerCase().includes("failed"); // Make checks case-insensitive
+
+            if (summaryIsPendingOrFailed) {
+                regenerateBtn.style.display = 'inline-flex'; // Show button
+                // --- THESE LINES ARE CRUCIAL ---
+                regenerateBtn.dataset.applicantId = currentApplicantId; // Set applicant ID
+                regenerateBtn.dataset.jobId = selectedJobId;     // Set job ID (assuming applicant object has jobId)
+                // -----------------------------
+                if (!regenerateBtn.dataset.applicantId || !regenerateBtn.dataset.jobId) {
+                    console.error("Failed to set necessary IDs on regenerate button!", `AppID: ${regenerateBtn.dataset.applicantId}`, `JobID: ${regenerateBtn.dataset.jobId}`);
+                    regenerateBtn.style.display = 'none'; // Hide button if IDs are missing
+               } else {
+                   console.log(`Set data attributes on regenerate button: applicantId=${regenerateBtn.dataset.applicantId}, jobId=${regenerateBtn.dataset.jobId}`);
+               }
+            } else {
+                regenerateBtn.style.display = 'none'; // Hide button
+                // Clear attributes when hiding (optional but clean)
+                delete regenerateBtn.dataset.applicantId;
+                delete regenerateBtn.dataset.jobId;
+            }
+        } else {
+            console.warn("#regenerate-summary-btn not found in DOM during render.");
+            // TODO: Render collaboration section (notes, votes)
+        }
+
+           
+
+
+            console.log("Profile rendering complete, chat inputs populated.");
+
+            console.log("Profile rendering complete.");
+        }
+   
     function renderWorkExperience(container, experiences) {
-        console.log("Rendering Work Experience. Data:", experiences); // Log input data
+        console.log("Rendering Work Experience. Data:", experiences);
+        if (!container) return; // Safety check
         container.innerHTML = ''; // Clear
-        if (!experiences || !Array.isArray(experiences) || experiences.length === 0) { // Add type check
-            container.innerHTML = '<p>No work experience parsed.</p>'; return;
-        }
-        experiences.forEach(exp => {
-             // Add check for valid exp object
-             if(!exp) { console.warn("Skipping invalid experience item"); return; }
-             const div = document.createElement('div');
-             div.classList.add('work-experience-item');
-             // ... (rest of innerHTML creation) ...
-             container.appendChild(div);
-        });
-        console.log("Finished rendering Work Experience."); // Log completion
+
+        if (!experiences || !Array.isArray(experiences) || experiences.length === 0) {
+            container.innerHTML = '<p><i>No work experience parsed.</i></p>'; return;
     }
-    function renderSkills(container, skills) {
-        console.log("Rendering Skills. Data:", skills); // Log input data
-        container.innerHTML = ''; // Clear
-        if (!skills || !Array.isArray(skills) || skills.length === 0) { // Add type check
-            container.innerHTML = '<p>No skills parsed.</p>'; return;
-        }
-        skills.forEach(skill => {
-            // Add check for valid skill object
-            if(!skill || !skill.name) { console.warn("Skipping invalid skill item:", skill); return; }
-             const span = document.createElement('span');
-             // ... (rest of innerHTML creation) ...
-             container.appendChild(span);
-        });
-         console.log("Finished rendering Skills."); // Log completion
+   
+    experiences.forEach(exp => {
+         if(!exp) { console.warn("Skipping invalid experience item"); return; }
+         const div = document.createElement('div');
+         div.classList.add('work-experience-item'); // Use timeline styles if desired
+
+         // --- START: Inner HTML Creation ---
+         div.innerHTML = `
+            <strong>${escapeHtml(exp.title || 'Role N/A')}</strong> at <strong>${escapeHtml(exp.company || 'Company N/A')}</strong>
+            <br>
+            <em>${escapeHtml(exp.duration || 'Duration N/A')}${exp.location ? `, ${escapeHtml(exp.location)}` : ''}</em>
+            ${(exp.description || (exp.responsibilities && exp.responsibilities.length > 0) || (exp.achievements && exp.achievements.length > 0)) ? '<div class="exp-details" style="margin-top: 5px; padding-left: 10px; font-size: 0.95em;">' : ''}
+            ${exp.description ? `<p style="margin-bottom: 3px;">${escapeHtml(exp.description)}</p>` : ''}
+            ${exp.responsibilities && exp.responsibilities.length > 0 ? `<ul style="margin-top: 3px; padding-left: 15px; list-style: disc;">${exp.responsibilities.map(r => `<li>${escapeHtml(r)}</li>`).join('')}</ul>` : ''}
+            ${exp.achievements && exp.achievements.length > 0 ? `<strong style="display: block; margin-top: 5px; font-size: 0.9em;">Achievements:</strong><ul style="padding-left: 15px; list-style: disc;">${exp.achievements.map(a => `<li>${escapeHtml(a)}</li>`).join('')}</ul>` : ''}
+            ${(exp.description || (exp.responsibilities && exp.responsibilities.length > 0) || (exp.achievements && exp.achievements.length > 0)) ? '</div>' : ''}
+         `;
+         // --- END: Inner HTML Creation ---
+
+         container.appendChild(div);
+         // console.log("Appended experience item to DOM:", div); // Keep if needed
+    });
+    console.log("Finished rendering Work Experience.");
+}
+
+function renderSkills(container, skills) {
+    console.log("Rendering Skills. Data:", skills);
+    if (!container) return; // Safety check
+    container.innerHTML = ''; // Clear
+
+    if (!skills || !Array.isArray(skills) || skills.length === 0) {
+        container.innerHTML = '<p><i>No skills parsed.</i></p>'; return;
     }
-    
-    function renderEducation(container, educations) {
-        console.log("Rendering Education. Data:", educations); // Log input data
-        container.innerHTML = ''; // Clear
-        if (!educations || !Array.isArray(educations) || educations.length === 0) { // Add type check
-            container.innerHTML = '<p>No education parsed.</p>'; return;
-        }
-        educations.forEach(edu => {
-            // Add check for valid edu object
-            if(!edu) { console.warn("Skipping invalid education item"); return; }
-             const p = document.createElement('p');
-             // ... (rest of innerHTML creation) ...
-             container.appendChild(p);
-        });
-        console.log("Finished rendering Education."); // Log completion
+
+    // Ensure container has the flex styles if not applied globally
+    container.style.display = 'flex';
+    container.style.flexWrap = 'wrap';
+    container.style.gap = '0.5rem';
+
+
+    skills.forEach(skill => {
+        if(!skill || !skill.name) { console.warn("Skipping invalid skill item:", skill); return; }
+        const span = document.createElement('span');
+        span.classList.add('skill-tag'); // Use the CSS class defined earlier
+
+        // --- START: Inner HTML Creation ---
+        span.innerHTML = `${escapeHtml(skill.name)} ${skill.proficiencyLevel && skill.proficiencyLevel !== 'Unknown' ? `<span class="proficiency">(${escapeHtml(skill.proficiencyLevel)})</span>` : ''}`;
+        // --- END: Inner HTML Creation ---
+
+        container.appendChild(span);
+        // console.log("Appended Skills item to DOM:", span); // Keep if needed
+    });
+    console.log("Finished rendering Skills.");
+}
+
+function renderEducation(container, educations) {
+    console.log("Rendering Education. Data:", educations);
+    if (!container) return; // Safety check
+    container.innerHTML = ''; // Clear
+
+    if (!educations || !Array.isArray(educations) || educations.length === 0) {
+        container.innerHTML = '<p><i>No education parsed.</i></p>'; return;
     }
+
+    educations.forEach(edu => {
+        if(!edu) { console.warn("Skipping invalid education item"); return; }
+        const p = document.createElement('p');
+        p.style.marginBottom = '0.5rem'; // Add spacing between education items
+
+        // --- START: Inner HTML Creation ---
+        p.innerHTML = `
+            <strong>${escapeHtml(edu.degree || 'Qualification N/A')}</strong>
+            ${edu.institution ? `, ${escapeHtml(edu.institution)}` : ''}
+            ${edu.specialization ? ` (${escapeHtml(edu.specialization)})` : ''}
+            ${edu.duration || edu.graduationDate ? `<br><em>${escapeHtml(edu.duration || edu.graduationDate)}</em>` : ''}
+            ${edu.gpa ? `<br><em style="font-size:0.9em;">GPA: ${escapeHtml(edu.gpa)}</em>` : ''}
+        `;
+        // --- END: Inner HTML Creation ---
+
+        container.appendChild(p);
+        // console.log("Appended Education item to DOM:", p); // Keep if needed
+    });
+    console.log("Finished rendering Education.");
+}
+
     async function generateAndRenderQuestions(applicantId) {
        if (!applicantId || !interviewQuestionsList) return;
        interviewQuestionsList.innerHTML = '<li>Generating questions...</li>';
@@ -864,11 +1148,14 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         // --- Example: Render as a Table ---
+        // --- Example: Render as a Table ---
         const table = document.createElement('table');
+        table.style.width = '100%'; // Ensure table takes width
+        table.style.borderCollapse = 'collapse'; // Optional table styling
         table.innerHTML = `
             <thead>
                 <tr>
-                    <th>Name</th>
+                    <th>Name ${anonymizedView ? '(Anonymized)' : ''}</th>
                     <th>Overall Score</th>
                     <th>Skill Match</th>
                     <th>Experience</th>
@@ -888,20 +1175,54 @@ document.addEventListener('DOMContentLoaded', () => {
             let scoreClass = 'low';
             if (overallScore >= 85) scoreClass = 'high';
             else if (overallScore >= 70) scoreClass = 'medium';
-
+            // --- Check anonymizedView flag here ---
+            const displayName = anonymizedView ? `Candidate ${app.id?.slice(-4) || '????'}` : (app.name || 'N/A');
+            const displayEmail = anonymizedView ? '---' : (app.email || 'N/A'); // Decide if you want to show email column
+            // --- End Check ---
             tr.innerHTML = `
-                <td>${escapeHtml(app.name)} ${app.isHiddenGem ? '<span class="hidden-gem-indicator" title="Potential Hidden Gem!">*</span>': ''}</td>
-                <td><span class="score-badge ${scoreClass}">${overallScore}%</span></td>
-                <td>${app.skillMatch || '--'}%</td>
-                <td>${app.experienceRelevance || '--'}%</td>
-                <td title="${escapeHtml(app.summary || '')}">${escapeHtml(app.summary?.substring(0, 50) || 'N/A')}...</td>
-                <td>${escapeHtml(app.currentStage || 'N/A')}</td>
-            `;
-            tr.addEventListener('click', () => selectApplicant(app.id)); // Use enhanced selectApplicant
-            tbody.appendChild(tr);
-        });
+            <td>${escapeHtml(displayName)} ${app.isHiddenGem ? '<span class="hidden-gem-indicator" title="Potential Hidden Gem!">*</span>': ''}</td>
+            <td><span class="score-badge ${scoreClass}">${overallScore}%</span></td>
+            <td>${app.skillMatch ?? '--'}%</td>
+            <td>${app.experienceRelevance ?? '--'}%</td>
+            <td title="${escapeHtml(app.summary || '')}">${escapeHtml(app.summary?.substring(0, 50) || 'N/A')}...</td>
+            <td>${escapeHtml(app.currentStage || 'N/A')}</td>
+        `;
+        // Add email cell if desired: <td>${escapeHtml(displayEmail)}</td>
+
+        tr.addEventListener('click', () => selectApplicant(app.id));
+        tbody.appendChild(tr);
+    });
         rankedListContainer.appendChild(table);
         // --- End Table Example ---
+        // --- Update Anonymize Button Text/Icon AFTER rendering ---
+        if (toggleAnonymizeBtn) {
+            toggleAnonymizeBtn.innerHTML = anonymizedView
+                ? '<span class="material-icons">visibility</span> Show Names'
+                : '<span class="material-icons">visibility_off</span> Anonymize';
+            // Optionally add/remove a class to the button for different styling
+            toggleAnonymizeBtn.classList.toggle('anonymized-active', anonymizedView);
+        }
+    }
+
+    if (toggleAnonymizeBtn) {
+        toggleAnonymizeBtn.addEventListener('click', () => {
+           anonymizedView = !anonymizedView; // Toggle the state flag
+           console.log("Anonymized view toggled to:", anonymizedView);
+    
+           // Re-render the list using the *cached* applicant data but applying the new flag state
+           renderRankedApplicantList(currentRankedApplicants); // Pass the currently loaded data
+    
+            // Also update the state of the profile view IF it's currently active for this applicant
+            if (selectedApplicantId && document.getElementById('applicant-details-view')?.classList.contains('active')) {
+                 console.log("Updating currently viewed profile for anonymization state...");
+                 // Re-fetch or just re-render using cached data but applying the flag
+                 const applicantData = applicantsData[selectedApplicantId]; // Assuming parsed data is in applicantsData
+                 const rankingInfo = currentRankedApplicants.find(app => app.id === selectedApplicantId);
+                 if (applicantData && rankingInfo) {
+                     renderCandidateProfile(applicantData, rankingInfo); // Re-render profile
+                 }
+            }
+        });
     }
 
    // --- Event Handlers (Add New Ones) ---
@@ -940,22 +1261,75 @@ document.addEventListener('DOMContentLoaded', () => {
            }
         });
    }
-    if (toggleAnonymizeBtn) {
-        toggleAnonymizeBtn.addEventListener('click', () => {
-           anonymizedView = !anonymizedView; // Toggle state
-           toggleAnonymizeBtn.innerHTML = anonymizedView ? '<span class="material-icons">visibility</span> Show Names' : '<span class="material-icons">visibility_off</span> Anonymize';
-           renderRankedApplicantList(currentRankedApplicants); // Re-render list with new state
-        });
-    }
-     if (showRankingGraphBtn) {
-         showRankingGraphBtn.addEventListener('click', () => {
-             // TODO: Implement graph rendering logic
-             alert("Ranking graph view not implemented yet.");
-             // showView('ranking-graph-view');
-             // renderRankingGraph(currentRankedApplicants);
-         });
-     }  
+    // if (toggleAnonymizeBtn) {
+    //     toggleAnonymizeBtn.addEventListener('click', () => {
+    //        anonymizedView = !anonymizedView; // Toggle state
+    //        toggleAnonymizeBtn.innerHTML = anonymizedView ? '<span class="material-icons">visibility</span> Show Names' : '<span class="material-icons">visibility_off</span> Anonymize';
+    //        renderRankedApplicantList(currentRankedApplicants); // Re-render list with new state
+    //     });
+    // }
+     
+     if (regenerateSummaryBtn) {
+        regenerateSummaryBtn.addEventListener('click', async (event) => {
+            const button = event.currentTarget;
+            const applicantId = button.dataset.applicantId;
+            const jobId = button.dataset.jobId;
 
+            if (!applicantId || !jobId) {
+                console.error("Missing applicantId or jobId on regenerate button.");
+                alert("Cannot regenerate summary: Missing context.");
+                return;
+            }
+
+            console.log(`Regenerate button clicked for Applicant: ${applicantId}, Job: ${jobId}`);
+            // Show loading state on button or summary text
+            button.disabled = true;
+            button.innerHTML = `<span class="material-icons loading-icon" style="animation: spin 1s linear infinite; font-size: 1em; margin-right: 3px;">sync</span> Regenerating...`;
+            if (profileAiSummary) profileAiSummary.textContent = 'Regenerating summary...';
+
+            try {
+                const result = await apiRequest('/api/ai/regenerate-summary', 'POST', { applicantId, jobId });
+
+                if (result && result.newSummary) {
+                    console.log("Successfully regenerated summary:", result.newSummary);
+                    // Update the UI immediately
+                    if (profileAiSummary) {
+                         profileAiSummary.textContent = result.newSummary;
+                         profileAiSummary.classList.remove('italic-text'); // Remove italic if it was set
+                    }
+                    button.style.display = 'none'; // Hide button after successful regeneration
+
+                    // --- OPTIONAL: Update local caches ---
+                    // Update currentRankedApplicants cache
+                    const rankedIndex = currentRankedApplicants.findIndex(app => app.id === applicantId);
+                    if (rankedIndex !== -1) {
+                        currentRankedApplicants[rankedIndex].summary = result.newSummary; // Update summary in list cache
+                    }
+                    // Update applicantsData cache (if it stores detailed ranking)
+                    if (applicantsData[applicantId] && applicantsData[applicantId].rankings && applicantsData[applicantId].rankings[jobId]) {
+                         applicantsData[applicantId].rankings[jobId].generatedSummary = result.newSummary;
+                    }
+                    // --- End Optional Cache Update ---
+
+                } else {
+                    throw new Error(result?.message || "Regeneration failed to return a new summary.");
+                }
+
+            } catch (error) {
+                console.error("Failed to regenerate summary:", error);
+                alert(`Error regenerating summary: ${error.message}`);
+                if (profileAiSummary) profileAiSummary.textContent = 'Regeneration failed. Please try again.';
+            } finally {
+                // Reset button state even on failure
+                button.disabled = false;
+                button.innerHTML = `<span class="material-icons" style="font-size: 1em; margin-right: 3px;">refresh</span> Regenerate Summary`;
+                // Keep button visible on failure so user can retry
+                if(profileAiSummary.textContent.includes("failed")) {
+                     button.style.display = 'inline-flex';
+                }
+            }
+        });
+    } 
     function renderLifecycleStages(applicant) {
          if (!lifecycleStagesDiv) return;
          lifecycleStagesDiv.innerHTML = ''; // Clear previous stages
@@ -1703,36 +2077,36 @@ document.addEventListener('DOMContentLoaded', () => {
                  if (!updatedApplicant || !updatedApplicant.id) { throw new Error("Invalid applicant data returned after stage update."); }
                 applicantsData[applicantId] = updatedApplicant;
                 alert(`Applicant stage updated to ${getStageName(updatedApplicant.currentStageId)}.`);
-                renderApplicantDetails(applicantId); // Re-render the whole details view
+                selectApplicant(applicantId); // Re-render the whole details view
                 loadApplicantsForJob(updatedApplicant.jobId); // Refresh list view if needed
             } catch (error) { /* Handled by apiRequest */ }
         });
     }
 
-    if (recruiterChatForm) {
-        recruiterChatForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const applicantId = aiChatApplicantIdInput.value;
-            const jobId = aiChatJobIdInput.value;
-            const question = recruiterChatInput.value.trim();
+    // if (recruiterChatForm) {
+    //     recruiterChatForm.addEventListener('submit', async (e) => {
+    //         e.preventDefault();
+    //         const applicantId = aiChatApplicantIdInput.value;
+    //         const jobId = aiChatJobIdInput.value;
+    //         const question = recruiterChatInput.value.trim();
 
-            if (!question || !applicantId || !jobId) return;
+    //         if (!question || !applicantId || !jobId) return;
 
-            addChatMessage(recruiterChatHistoryDiv, 'user', question);
-            recruiterChatInput.value = '';
-            recruiterChatInput.disabled = true;
+    //         addChatMessage(recruiterChatHistoryDiv, 'user', question);
+    //         recruiterChatInput.value = '';
+    //         recruiterChatInput.disabled = true;
 
-            try {
-                const response = await apiRequest('/api/ai/assess-candidate', 'POST', { applicantId, jobId, question });
-                addChatMessage(recruiterChatHistoryDiv, 'model', response.assessment);
-            } catch (error) {
-                addChatMessage(recruiterChatHistoryDiv, 'model', `Error: ${error.message}`);
-            } finally {
-                recruiterChatInput.disabled = false;
-                recruiterChatInput.focus();
-            }
-        });
-    }
+    //         try {
+    //             const response = await apiRequest('/api/ai/assess-candidate', 'POST', { applicantId, jobId, question });
+    //             addChatMessage(recruiterChatHistoryDiv, 'model', response.assessment);
+    //         } catch (error) {
+    //             addChatMessage(recruiterChatHistoryDiv, 'model', `Error: ${error.message}`);
+    //         } finally {
+    //             recruiterChatInput.disabled = false;
+    //             recruiterChatInput.focus();
+    //         }
+    //     });
+    // }
 
     // --- Data Loading Functions ---
     async function loadJobs() {
