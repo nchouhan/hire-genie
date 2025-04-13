@@ -29,21 +29,27 @@ class Applicant {
         this.discrepancies = initialData.discrepancies || []; // List of flagged issues
         this.careerTrajectory = initialData.careerTrajectory || null; // AI analysis result
 
-        // --- Application Lifecycle & Ranking (Managed Separately or Here) ---
         this.currentStageId = 'parsing'; // Start with a parsing/ranking stage
-        this.stageHistory = [/* ... existing structure ... */];
-        this.rankings = { // Store job-specific ranking
-            // jobId: { overallScore: 92, skillMatch: 85, experienceRelevance: 95, ... , generatedSummary: "...", isHiddenGem: false }
-        };
-        this.notes = []; // Array of { by: 'hm@email.com', timestamp: ..., text: '...' }
-        this.votes = {}; // { 'hm@email.com': 'yes'/'no'/'maybe' }
-        this.anonymized = false; // Flag for bias mitigation view
+        this.notes = initialData.notes || []; // Array of { by: 'hm@email.com', timestamp: ..., text: '...' }
+        this.votes = initialData.votes || {}; // { 'hm@email.com': 'yes'/'no'/'maybe' }
 
         // --- Original Files/Links (Store paths or URLs) ---
-        this.originalCvPath = initialData.originalCvPath || null;
         this.submittedLinks = initialData.submittedLinks || [];
 
         this.chatHistory = []; // Keep candidate chat if implemented
+        this.rankings = initialData.rankings || {};
+        this.anonymized = initialData.anonymized || false;
+        this.originalCvPath = initialData.originalCvPath || null;
+        
+
+        this.stageHistory = initialData.stageHistory || [{ // Example initial stage if needed
+             stageId: 'submitted', // Or the first actual stage from config
+             enteredAt: new Date().toISOString(),
+             assignedTo: 'System', // Or initial recruiter
+             feedback: [], // Feedback array for this stage instance
+             overallFeedback: '', // HM's summary for the stage
+             status: 'pending_review' // pending, passed, rejected, completed-passed, completed-rejected
+        }];
     }
 }
 module.exports = Applicant;

@@ -24,6 +24,12 @@
     <div id="app-container" class="hidden">
         <header>
             <h1 class="animated-gradient-header">Talenta AI Agent</h1>
+            <!-- Dark Mode Toggle Button -->
+            <button id="theme-toggle-btn" class="btn secondary-btn theme-toggle" title="Toggle Theme">
+                <span class="material-icons light-icon">light_mode</span>
+                <span class="material-icons dark-icon">dark_mode</span>
+            </button>
+    <!-- End Toggle -->
         </header>
 
         <main class="container">
@@ -268,12 +274,74 @@
                                 <ul id="interview-questions-list" class="section-content job-list-items" style="margin-top: 1rem;"></ul>
                             </div>
             
-                            <div class="profile-section">
-                                <h5>Team Collaboration (Placeholder)</h5>
-                                <textarea placeholder="Add internal notes..." rows="3" style="margin-bottom: 0.5rem;"></textarea>
-                                <select style="margin-bottom: 0.5rem;"> <option>Vote: (Select)</option> <option value="yes">Yes</option> <option value="no">No</option> <option value="maybe">Maybe</option> </select>
-                                <input type="text" placeholder="Tag colleagues (@mention)">
-                            </div>
+                            <div class="profile-section collaboration-section">
+                                <h5>Team Collaboration</h5>
+                        
+                                <!-- Voting Area -->
+                                <div class="voting-area">
+                                    <h6>Quick Vote:</h6>
+                                    <div class="vote-buttons">
+                                         <!-- Add data-vote attribute for JS -->
+                                        <button class="btn vote-btn" data-vote="yes"><span class="material-icons">thumb_up_off_alt</span> Yes</button>
+                                        <button class="btn vote-btn" data-vote="maybe"><span class="material-icons">help_outline</span> Maybe</button>
+                                        <button class="btn vote-btn" data-vote="no"><span class="material-icons">thumb_down_off_alt</span> No</button>
+                                        <!-- Button to clear vote? (Optional) -->
+                                         <button class="btn vote-btn clear-vote-btn" data-vote="" title="Clear My Vote"><span class="material-icons">backspace</span> Clear</button>
+                                    </div>
+                                    <div id="vote-summary" class="vote-summary-display">
+                                        <!-- Summary like "Votes: 2 Yes, 1 Maybe" loaded by JS -->
+                                        Loading votes...
+                                    </div>
+                                </div>
+                                <!-- Notes Area -->
+                                <div class="notes-area">
+                                    <h6>Internal Notes:</h6>
+                                    <form id="add-note-form">
+                                        <div class="form-group">
+                                            <textarea id="new-note-text" placeholder="Add an internal note (visible only to team)..." rows="3" required></textarea>
+                                        </div>
+                                        <!-- Replace value with actual logged-in user later -->
+                                        <input type="hidden" id="note-author-email" value="recruiter@example.com">
+                                        <button type="submit" class="btn secondary-btn btn-small">Add Note</button>
+                                    </form>
+                                    <div id="notes-list" class="notes-list-display">
+                                        <!-- Notes loaded by JS -->
+                                        <p>Loading notes...</p>
+                                    </div>
+                                </div>
+                                </div> <!-- End Collaboration Section -->
+
+                                <div id="current-stage-details">
+                                    <h4>Current Stage: <span id="current-stage-name"></span></h4>
+                                    <p><strong>Assigned To:</strong> <span id="current-stage-assigned"></span></p>
+                                    <!-- Display Objectives Clearly -->
+                                    <div class="stage-objectives">
+                                        <strong>Objectives for this stage:</strong>
+                                        <ul id="current-stage-objectives-list">
+                                            <li>Loading objectives...</li>
+                                        </ul>
+                                    </div>
+                                
+                                    <!-- Display Submitted Feedback -->
+                                    <h5 style="margin-top: 1.5rem;">Feedback History for Current Stage:</h5>
+                                    <div id="current-stage-feedback-list" class="feedback-list">
+                                        <p><i>No feedback submitted yet for this stage.</i></p>
+                                        <!-- Structured feedback will be rendered here -->
+                                    </div>
+                                
+                                    <!-- Placeholder for the Dynamic Feedback Form -->
+                                    <h5 style="margin-top: 1.5rem;">Add Your Feedback:</h5>
+                                    <div id="structured-feedback-form-container">
+                                        <!-- Form will be built here by JS -->
+                                        <p><i>Loading feedback form...</i></p>
+                                    </div>
+                                
+                                    <!-- Keep "Move Stage" form separate -->
+                                    <h5 style="margin-top: 1.5rem;">Move to Next Stage / Decision:</h5>
+                                    <form id="change-stage-form">
+                                        <!-- ... keep existing stage change inputs/selects ... -->
+                                    </form>
+                                </div>
                             <!-- ===  RECRUITER CHAT  === -->
                             <div class="profile-section ai-chat-section">
                                 <h5>AI Assistant - Candidate Assessment</h5>
@@ -292,6 +360,37 @@
                                 </form>
                             </div>
                             <!-- === END RECRUITER CHAT === -->
+                             <!-- === ADD/MOVE Stage Change Form HERE === -->
+                            <div class="profile-section stage-change-section">
+                                <h5>Move Stage / Decision</h5>
+                                <form id="change-stage-form">
+                                    <input type="hidden" id="stage-change-applicant-id">
+                                    <div class="form-group">
+                                        <label for="stage-decision">Decision for Current Stage:</label>
+                                        <select id="stage-decision" required>
+                                            <option value="">-- Select --</option>
+                                            <option value="passed">Pass to Next Stage</option>
+                                            <option value="rejected">Reject Applicant</option>
+                                        </select>
+                                    </div>
+                                    <!-- This div contains the problematic select -->
+                                    <div id="next-stage-selector" class="form-group" style="display: none;">
+                                    <label for="next-stage-id">Next Stage:</label>
+                                    <select id="next-stage-id">
+                                            <!-- Options populated by JS -->
+                                            <option value="">Loading...</option>
+                                        </select>
+                                        <label for="next-stage-assignee">Assign To:</label>
+                                        <input type="text" id="next-stage-assignee" placeholder="assignee@example.com">
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="overall-feedback">Overall Stage Feedback (Optional):</label>
+                                        <textarea id="overall-feedback" rows="2"></textarea>
+                                    </div>
+                                    <button type="submit" class="btn primary-btn">Confirm Decision</button>
+                                </form>
+                        </div>
+                        <!-- === END Stage Change Form === -->
                         </div>
                         <!-- End of right column -->
                     </div>

@@ -23,12 +23,117 @@
     --card-shadow: 0 1px 2px 0 rgba(60,64,67,.3), 0 1px 3px 1px rgba(60,64,67,.15); /* Subtle shadow */
     --focus-shadow: 0 0 0 2px var(--background-light), 0 0 0 4px var(--focus-ring-color);
 }
+/* --- NEW: Dark Mode Variable Overrides --- */
+body.dark-mode {
+    /* Invert background and text colors */
+    --text-primary: #e8eaed;         /* Light gray text */
+    --text-secondary: #9aa0a6;       /* Lighter gray secondary text */
+    --border-color: #3c4043;         /* Darker border */
+    --background-light: #202124;     /* Dark gray background */
+    --background-white: #2c3136;     /* Slightly lighter dark for cards/inputs */
 
+    /* Adjust shadows for dark background */
+    --card-shadow: 0 1px 2px 0 rgba(0,0,0,.3), 0 1px 3px 1px rgba(0,0,0,.15); /* Use darker shadows */
+
+    /* Adjust focus ring for dark background */
+    --focus-ring-color: #8ab4f8;    /* Lighter blue for focus */
+    --focus-shadow: 0 0 0 2px var(--background-light), 0 0 0 4px var(--focus-ring-color);
+
+    /* Adjust button colors (example overrides) */
+    --google-blue: #8ab4f8; /* Lighter blue for primary button text/focus */
+    /* Primary button might need specific background override */
+    /* Secondary button might need specific text/border override */
+
+    /* You might need specific overrides for other variables too */
+    /* e.g., link colors, specific component backgrounds */
+    color-scheme: dark; /* Hint for browser UI like scrollbars */
+}
+/* --- END Dark Mode Overrides --- */
+
+
+/* --- Component Adjustments for Dark Mode --- */
+/* Add specific overrides ONLY if variables aren't enough */
+
+/* Example: Ensure secondary button text is readable */
+body.dark-mode .secondary-btn {
+    color: var(--google-blue); /* Use the lighter blue defined in dark mode */
+    background-color: #3c4043; /* Slightly darker background */
+    border-color: #5f6368; /* Gray border */
+}
+ body.dark-mode .secondary-btn:hover {
+    background-color: #4a4d52; /* Slightly lighter on hover */
+ }
+
+/* Example: Adjust hover states */
+body.dark-mode #job-list .job-item:hover,
+body.dark-mode #applicant-list .applicant-item:hover {
+    background-color: rgba(255, 255, 255, 0.05); /* Very subtle light wash */
+}
+body.dark-mode #job-list .job-item.selected {
+    background-color: rgba(138, 180, 248, 0.1); /* Lighter blue wash for selection */
+    border-left-color: var(--focus-ring-color); /* Use the lighter blue */
+}
+
+/* Example: Ensure chat bubbles have contrast */
+ body.dark-mode .chat-message.user {
+    background-color: #304970; /* Darker blue */
+    color: #e8eaed;
+}
+ body.dark-mode .chat-message.model {
+    background-color: #3c4043; /* Dark gray */
+    color: #e8eaed;
+}
+
+ /* Example: Ensure output/original boxes have contrast */
+ body.dark-mode .output-area,
+ body.dark-mode #job-details-full-desc, /* If still used */
+ body.dark-mode .original-content {
+     background-color: var(--background-light); /* Use dark main bg */
+     border-color: var(--border-color);
+     color: var(--text-primary);
+ }
+ body.dark-mode #enhancement-rationale {
+     background-color: var(--background-light);
+     border-color: var(--border-color);
+ }
+
+ /* Example: Input/Textarea background */
+ body.dark-mode .form-group input[type="text"],
+ body.dark-mode .form-group input[type="email"],
+ /* ... other inputs/selects ... */
+ body.dark-mode .form-group textarea {
+     background-color: #303134; /* Slightly different dark for inputs */
+     border-color: var(--border-color);
+     color: var(--text-primary);
+ }
+  body.dark-mode .form-group input:focus,
+  body.dark-mode .form-group select:focus,
+  body.dark-mode .form-group textarea:focus {
+     border-color: var(--focus-ring-color);
+     box-shadow: 0 0 0 1px var(--focus-ring-color);
+     background-color: #3c4043;
+ }
 * {
     box-sizing: border-box;
     margin: 0;
     padding: 0;
 }
+.theme-toggle {
+    position: absolute; /* Position relative to header */
+    top: 0.8rem; /* Adjust */
+    right: 2rem; /* Adjust */
+    padding: 0.4rem 0.5rem; /* Smaller padding */
+    border-radius: 50%; /* Make it round */
+    min-width: auto; /* Allow natural width */
+    min-height: auto;
+    line-height: 1;
+}
+/* Hide the icon for the non-active theme */
+.theme-toggle .dark-icon { display: inline-block; } /* Show moon by default (light mode) */
+.theme-toggle .light-icon { display: none; }
+
+body.dark-mode .theme-toggle .dark-icon { display: none; }
+body.dark-mode .theme-toggle .light-icon { display: inline-block; }
 
 body {
     font-family: var(--font-family-sans-serif);
@@ -597,7 +702,7 @@ hr {
 .ai-chat-section h5 {
     /* Inherits .profile-section h5 styles */
 }
-    
+
 #recruiter-chat-form, #candidate-chat-form {
     display: flex;
     gap: 0.5rem;
@@ -1500,4 +1605,233 @@ body.dark-theme.candidate-page {
 }
 .review-skills .skill-edit-item select { /* Proficiency dropdown */
      max-width: 150px; /* Limit width */
+}
+/* --- Collaboration Section --- */
+.collaboration-section {
+    /* Inherits .profile-section styles */
+}
+
+.voting-area {
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px dashed var(--border-color); /* Dashed separator */
+}
+
+.notes-area {
+    margin-top: 1rem;
+}
+
+.collaboration-section h6 { /* Sub-headers for Vote/Notes */
+    font-size: var(--small-font-size);
+    font-weight: 500;
+    color: var(--text-secondary);
+    margin-bottom: 0.75rem;
+}
+
+/* Voting Buttons */
+.vote-buttons {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.vote-btn {
+    padding: 0.3rem 0.8rem; /* Smaller buttons */
+    font-size: var(--label-font-size);
+    display: inline-flex;
+    align-items: center;
+    border: 1px solid var(--border-color);
+    background-color: var(--background-white);
+    color: var(--text-secondary);
+}
+.vote-btn .material-icons {
+    font-size: 1.1em;
+    margin-right: 4px;
+}
+.vote-btn:hover {
+    background-color: var(--background-light);
+    border-color: #c0c2c5;
+}
+/* Style for the currently selected vote */
+.vote-btn.selected-vote {
+    border-width: 2px;
+    font-weight: 500;
+}
+.vote-btn[data-vote="yes"].selected-vote {
+    border-color: var(--google-green);
+    color: var(--google-green-dark);
+    background-color: rgba(52, 168, 83, 0.1);
+}
+.vote-btn[data-vote="maybe"].selected-vote {
+     border-color: #FBBC05;
+     color: #b38200;
+     background-color: rgba(251, 188, 5, 0.1);
+}
+.vote-btn[data-vote="no"].selected-vote {
+     border-color: var(--google-red);
+     color: #a50e0e;
+     background-color: rgba(234, 67, 53, 0.1);
+}
+.clear-vote-btn { /* Specific style for clear button */
+    border-style: dashed;
+}
+.clear-vote-btn .material-icons {
+    opacity: 0.7;
+}
+
+
+.vote-summary-display {
+    font-size: var(--label-font-size);
+    color: var(--text-secondary);
+    padding-top: 0.5rem;
+}
+
+/* Notes List */
+#add-note-form {
+    margin-bottom: 1rem;
+}
+#add-note-form textarea {
+    min-height: 60px; /* Ensure decent size */
+}
+#add-note-form .btn {
+    float: right; /* Position button */
+}
+
+.notes-list-display {
+    max-height: 300px; /* Limit height and make scrollable */
+    overflow-y: auto;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    padding: 0.5rem;
+    background-color: var(--background-white);
+}
+
+.note-item {
+    padding: 0.75rem;
+    border-bottom: 1px solid var(--border-color);
+    font-size: var(--small-font-size);
+}
+.note-item:last-child {
+    border-bottom: none;
+}
+.note-meta {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.75rem; /* Smaller meta text */
+    color: var(--text-secondary);
+    margin-bottom: 0.4rem;
+}
+.note-author {
+    font-weight: 500;
+}
+.note-text {
+    line-height: 1.5;
+    white-space: pre-wrap; /* Respect line breaks in notes */
+    word-wrap: break-word;
+}
+/* --- Structured Feedback Section --- */
+
+.stage-objectives {
+    margin-top: 0.75rem;
+    padding: 0.8rem;
+    background-color: var(--background-light);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    font-size: var(--small-font-size);
+}
+.stage-objectives strong {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+}
+#current-stage-objectives-list {
+    list-style: disc;
+    margin-left: 1.2rem;
+    padding: 0;
+    color: var(--text-primary);
+}
+#current-stage-objectives-list li {
+    margin-bottom: 0.25rem;
+}
+
+/* Container for the dynamically built form */
+#structured-feedback-form-container {
+    margin-top: 0.5rem;
+    padding: 1rem;
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    background-color: #fdfdfd; /* Slightly different background for form area */
+}
+
+/* Styling for each objective's feedback block */
+.objective-feedback-block {
+    margin-bottom: 1.25rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px dashed var(--border-color);
+}
+.objective-feedback-block:last-of-type { /* No border on last one */
+    margin-bottom: 0.5rem;
+    border-bottom: none;
+}
+
+.objective-feedback-block label.objective-label {
+    font-weight: 500;
+    display: block;
+    margin-bottom: 0.5rem;
+    color: var(--text-primary);
+}
+
+/* Styling for rating inputs (example using radios) */
+.rating-group {
+    margin-bottom: 0.5rem;
+    display: flex;
+    gap: 0.8rem;
+    align-items: center;
+}
+.rating-group label { /* Style individual radio labels */
+    font-size: var(--small-font-size);
+    font-weight: normal;
+    margin: 0;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+}
+.rating-group input[type="radio"] {
+    margin-right: 4px;
+    cursor: pointer;
+}
+
+/* Styling for comments textarea within feedback form */
+#structured-feedback-form-container textarea {
+    min-height: 50px;
+    font-size: var(--small-font-size);
+    margin-top: 0.3rem; /* Space above comment box */
+}
+
+/* Styling for displaying submitted structured feedback */
+.feedback-list .feedback-item {
+    /* Keep base styles */
+}
+.feedback-item .feedback-overall-comment {
+    margin-bottom: 0.75rem;
+    font-style: italic;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px dashed #eee;
+}
+.feedback-item .feedback-objective-rating {
+    margin-left: 1rem;
+    margin-bottom: 0.5rem;
+    font-size: 0.9em;
+}
+.feedback-item .rating-stars { /* Optional visual stars */
+    color: #FBBC05; /* Google Yellow */
+    margin-left: 5px;
+    font-size: 1.1em;
+}
+.feedback-item .objective-comment {
+    margin-left: 2.5rem; /* Indent objective comment */
+    font-size: 0.95em;
+    color: var(--text-secondary);
 }

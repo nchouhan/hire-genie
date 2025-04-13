@@ -31,7 +31,19 @@ document.addEventListener('DOMContentLoaded', () => {
     let rankingChartInstance = null; // Store chart instance for later use
     const splashScreen = document.getElementById('splash-screen');
     const appContainer = document.getElementById('app-container');
+    
     // --- DOM Elements ---
+    const themeToggleBtn = document.getElementById('theme-toggle-btn');
+    const currentStageObjectivesList = document.getElementById('current-stage-objectives-list');
+    const structuredFeedbackFormContainer = document.getElementById('structured-feedback-form-container');
+
+    const voteButtonsContainer = document.querySelector('.vote-buttons'); // Container for buttons
+    const voteSummaryDisplay = document.getElementById('vote-summary');
+    const addNoteForm = document.getElementById('add-note-form');
+    const newNoteText = document.getElementById('new-note-text');
+    const noteAuthorEmailInput = document.getElementById('note-author-email'); // Placeholder for user email
+    const notesListDisplay = document.getElementById('notes-list');
+
     const showRankingGraphBtn = document.getElementById('show-ranking-graph-btn');
     const rankingGraphView = document.getElementById('ranking-graph-view');
     const rankingGraphTitle = document.getElementById('ranking-graph-title');
@@ -83,7 +95,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const currentStageFeedbackListDiv = document.getElementById('current-stage-feedback-list');
     const addFeedbackForm = document.getElementById('add-feedback-form');
     const feedbackApplicantIdInput = document.getElementById('feedback-applicant-id');
-    const feedbackStageIdInput = document.getElementById('feedback-stage-id');
+    // const feedbackStageIdInput = document.getElementById('feedback-stage-id');
     const feedbackCommentTextarea = document.getElementById('feedback-comment');
     const feedbackRatingInput = document.getElementById('feedback-rating');
     const feedbackByInput = document.getElementById('feedback-by'); // Assuming static for now
@@ -180,6 +192,35 @@ document.addEventListener('DOMContentLoaded', () => {
     let currentRankedApplicants = []; // Cache for ranked list
     let anonymizedView = false; // Track anonymization state
     let recruiterAiChatHistory = {}; // Store chat history for each applicant
+    const currentUserEmail = "recruiter@example.com"; // Placeholder - Replace with actual logged-in user
+
+    const currentTheme = localStorage.getItem('theme');
+    // Apply theme on initial load
+    if (currentTheme === 'dark') {
+        document.body.classList.add('dark-mode');
+    } else {
+        // Default to light if no preference or invalid value
+        document.body.classList.remove('dark-mode');
+        // Ensure localStorage reflects light state if invalid
+        if (currentTheme && currentTheme !== 'light') {
+             localStorage.setItem('theme', 'light');
+        }
+    }
+
+    // --- Event Handlers ---
+    if (themeToggleBtn) {
+        themeToggleBtn.addEventListener('click', () => {
+            document.body.classList.toggle('dark-mode'); // Toggle the class on body
+
+            // Save the new preference
+            let theme = 'light';
+            if (document.body.classList.contains('dark-mode')) {
+                theme = 'dark';
+            }
+            localStorage.setItem('theme', theme);
+            console.log(`Theme set to: ${theme}`);
+        });
+    }
 
     if (splashScreen && appContainer) {
         // Set timeout for splash screen
@@ -297,35 +338,27 @@ document.addEventListener('DOMContentLoaded', () => {
             const question = recruiterChatInput.value.trim();
 
             if (!question || !applicantId || !jobId) return;
-
-            // Manage history using the recruiterAiChatHistory from the outer scope
-            if (!recruiterAiChatHistory[applicantId]) {
-                recruiterAiChatHistory[applicantId] = [];
-            }
-            const currentHistory = recruiterAiChatHistory[applicantId];
-            currentHistory.push({ role: 'user', parts: [{ text: question }] });
-            const MAX_HIST = 8;
-            if (currentHistory.length > MAX_HIST) {
-                recruiterAiChatHistory[applicantId] = currentHistory.slice(-MAX_HIST);
-            }
-
+            // Add USER message to UI immediately
             addChatMessage(recruiterChatHistoryDiv, 'user', question);
             recruiterChatInput.value = '';
             recruiterChatInput.disabled = true;
 
+
+            // Manage history using the recruiterAiChatHistory from the outer scope
             try {
-                const requestBody = { applicantId, jobId, question, history: recruiterAiChatHistory[applicantId] };
+                // Send ONLY necessary data - backend manages history storage
+                const requestBody = { applicantId, jobId, question };
+                console.log("Sending assessment request body:", requestBody);
+                // Backend saves history and returns ONLY the new assessment
                 const response = await apiRequest('/api/ai/assess-candidate', 'POST', requestBody);
 
+                // Add AI response to UI
                 if (response && response.assessment) {
                     addChatMessage(recruiterChatHistoryDiv, 'model', response.assessment);
-                    recruiterAiChatHistory[applicantId].push({ role: 'model', parts: [{ text: response.assessment }] });
-                    if (recruiterAiChatHistory[applicantId].length > MAX_HIST) {
-                        recruiterAiChatHistory[applicantId] = recruiterAiChatHistory[applicantId].slice(-MAX_HIST);
-                    }
+                    // NO need to update local history array anymore
                 } else {
-                    console.warn("Unexpected response from /api/ai/assess-candidate:", response);
-                    addChatMessage(recruiterChatHistoryDiv, 'model', "Received empty/invalid response.");
+                     console.warn("Unexpected response from /api/ai/assess-candidate:", response);
+                     addChatMessage(recruiterChatHistoryDiv, 'model', "Received empty/invalid response.");
                 }
             } catch (error) {
                 addChatMessage(recruiterChatHistoryDiv, 'model', `Error: Could not get assessment.`);
@@ -412,6 +445,66 @@ document.addEventListener('DOMContentLoaded', () => {
                 submitButton.disabled = false; // Re-enable button
             }
         });
+    }
+// NEW: Render Notes List
+    function renderNotes(notesArray) {
+        if (!notesListDisplay) return;
+        notesListDisplay.innerHTML = ''; // Clear
+        const notes = notesArray || []; // Ensure it's an array
+
+        if (notes.length === 0) {
+            notesListDisplay.innerHTML = '<p><i>No notes added yet.</i></p>';
+            return;
+        }
+
+        notes.forEach(note => {
+             const noteDiv = document.createElement('div');
+             noteDiv.classList.add('note-item');
+             const formattedTimestamp = new Date(note.timestamp).toLocaleString();
+             noteDiv.innerHTML = `
+                <div class="note-meta">
+                    <span class="note-author">${escapeHtml(note.by)}</span>
+                    <span class="note-timestamp">${formattedTimestamp}</span>
+                </div>
+                <p class="note-text">${escapeHtml(note.text)}</p>
+             `;
+             notesListDisplay.appendChild(noteDiv);
+        });
+    }
+
+    // NEW: Render Votes and Summary
+    function renderVotes(votesObject) {
+        if (!voteButtonsContainer || !voteSummaryDisplay) return;
+        const votes = votesObject || {};
+        const voteCounts = { yes: 0, no: 0, maybe: 0 };
+        let myVote = votes[currentUserEmail] || null; // Find current user's vote
+
+        // Update button selected state
+        voteButtonsContainer.querySelectorAll('.vote-btn').forEach(button => {
+            button.classList.remove('selected-vote'); // Remove from all
+            if (button.dataset.vote === myVote && myVote !== null && myVote !== '') {
+                 button.classList.add('selected-vote'); // Add to the one matching myVote
+            }
+             // Disable clear button if no vote selected
+             if(button.classList.contains('clear-vote-btn')) {
+                  button.disabled = (myVote === null || myVote === '');
+             }
+        });
+
+        // Calculate summary
+        Object.values(votes).forEach(voteValue => {
+            if (voteCounts.hasOwnProperty(voteValue)) {
+                voteCounts[voteValue]++;
+            }
+        });
+
+        // Display summary
+        let summaryParts = [];
+        if (voteCounts.yes > 0) summaryParts.push(`${voteCounts.yes} Yes`);
+        if (voteCounts.maybe > 0) summaryParts.push(`${voteCounts.maybe} Maybe`);
+        if (voteCounts.no > 0) summaryParts.push(`${voteCounts.no} No`);
+
+        voteSummaryDisplay.textContent = summaryParts.length > 0 ? `Votes: ${summaryParts.join(', ')}` : 'No votes yet.';
     }
 
     function renderPortalData(applicant, job) {
@@ -790,6 +883,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Set key loading texts
         if (profileApplicantName) profileApplicantName.textContent = 'Loading Applicant...';
+        if (recruiterChatHistoryDiv) recruiterChatHistoryDiv.innerHTML = '<p><i>Loading chat history...</i></p>'; // Chat loading state
         if (profileSummary) profileSummary.textContent = 'Loading summary...';
         if (profileAiSummary) profileAiSummary.textContent = 'Loading insights...';
     
@@ -798,13 +892,20 @@ document.addEventListener('DOMContentLoaded', () => {
             // 1. Fetch FULL parsed data for the applicant
             console.log(`Fetching parsed data for applicant ${applicantId}...`);
             // Ensure your backend has the /parsed endpoint implemented
-            const applicantData = await apiRequest(`/api/applicants/${applicantId}/parsed`);
+            const fetchProfile = await apiRequest(`/api/applicants/${applicantId}/parsed`);
+            
+            const fetchChat = apiRequest(`/api/chats/${selectedJobId}/${applicantId}`);
+            
+            const [applicantData, chatData] = await Promise.all([fetchProfile, fetchChat]);;
+            
             console.log("Parsed data received:", JSON.stringify(applicantData, null, 2));
-    
+            console.log("Fetching chat history..."), JSON.stringify(fetchChat, null, 2);
+
             // 2. Find the specific RANKING info for THIS applicant (from cached list is best)
             console.log(`Finding ranking info for applicant ${applicantId} in list:`, currentRankedApplicants);
             let rankingInfo = currentRankedApplicants.find(app => app.id === applicantId);
-    
+            console.log("Ranking info found/used:", rankingInfo);
+
             if (!rankingInfo) {
                  console.warn(`Ranking info for ${applicantId} not found in cached list.`);
                  // Fallback: use an empty/default object
@@ -818,12 +919,31 @@ document.addEventListener('DOMContentLoaded', () => {
             }
     
             // 4. Render the profile using the correct function and data
-            renderCandidateProfile(applicantData, rankingInfo); // CALL THE CORRECT RENDER FUNCTION
-    
+            renderCandidateProfile(applicantData, rankingInfo);
+            renderRecruiterChatHistoryFromData(chatData?.history); // Pass the history array
         } catch (error) {
             console.error(`Error loading/rendering applicant profile ${applicantId}:`, error);
             showError(`Error loading applicant profile: ${error.message}`);
             // Optionally revert view if needed
+        }
+    }
+    // --- NEW: Function to Render Chat History from Data ---
+    function renderRecruiterChatHistoryFromData(historyArray) {
+        if (!recruiterChatHistoryDiv) return;
+        recruiterChatHistoryDiv.innerHTML = ''; // Clear previous
+        currentlyDisplayedChatHistory = historyArray || []; // Store locally if needed
+
+        if (currentlyDisplayedChatHistory.length === 0) {
+            recruiterChatHistoryDiv.innerHTML = '<p>Ask the AI about this candidate...</p>';
+        } else {
+            currentlyDisplayedChatHistory.forEach(msg => {
+                // Ensure message format is correct before accessing parts
+                if (msg && msg.role && msg.parts && msg.parts[0] && typeof msg.parts[0].text === 'string') {
+                    addChatMessage(recruiterChatHistoryDiv, msg.role, msg.parts[0].text);
+                } else {
+                    console.warn("Skipping rendering invalid chat message:", msg);
+                }
+            });
         }
     }
 
@@ -948,23 +1068,23 @@ document.addEventListener('DOMContentLoaded', () => {
         const summaryText = ranking?.summary || ''; // Default to empty string
         console.log("AI summary text before adding to textContent Summary text:", summaryText);
         const summaryIsPendingOrFailed = !summaryText || summaryText.includes("pending") || summaryText.includes("failed"); // Check for indicator phrases
+
         if (profileAiSummary) {
             profileAiSummary.textContent = summaryText || 'No AI summary available.'; // Display current summary or placeholder
             profileAiSummary.classList.toggle('italic-text', summaryIsPendingOrFailed); // Italicize if pending/failed
         }
-            // --- Populate Hidden Chat Inputs ---
-            // currentApplicantId = applicant?.id || ranking?.id; // Get ID again for safety
-            const currentJobId = applicant?.jobId || selectedJobId; // Get Job ID (prefer applicant obj, fallback to global)
+        // --- Populate Hidden Chat Inputs ---
+        // currentApplicantId = applicant?.id || ranking?.id; // Get ID again for safety
 
-            if (aiChatApplicantIdInput) aiChatApplicantIdInput.value = currentApplicantId || '';
-            if (aiChatJobIdInput) aiChatJobIdInput.value = currentJobId || '';
-            // --- End Populate ---
-
-            // --- Clear Previous Chat History ---
-            if (recruiterChatHistoryDiv) {
-                recruiterChatHistoryDiv.innerHTML = '<p>Ask the AI about this candidate...</p>'; // Reset placeholder
-            }
-            if(recruiterChatInput) recruiterChatInput.value = ''; // Clear input field
+        if (aiChatApplicantIdInput) aiChatApplicantIdInput.value = currentApplicantId || '';
+        if (aiChatJobIdInput) aiChatJobIdInput.value = selectedJobId || ''; // Use selectedJobId
+        // --- End Populate ---
+        renderCurrentStageDetails(applicant); // Pass the applicant object to render current stage details
+        // --- Clear Previous Chat History ---
+        if (recruiterChatHistoryDiv) {
+            recruiterChatHistoryDiv.innerHTML = '<p>Ask the AI about this candidate...</p>'; // Reset placeholder
+        }
+        if(recruiterChatInput) recruiterChatInput.value = ''; // Clear input field
         const regenerateBtn = document.getElementById('regenerate-summary-btn'); // Get reference
         if (regenerateBtn) {
             const summaryText = ranking?.summary || '';
@@ -992,14 +1112,16 @@ document.addEventListener('DOMContentLoaded', () => {
             console.warn("#regenerate-summary-btn not found in DOM during render.");
             // TODO: Render collaboration section (notes, votes)
         }
+        // --- Render Collaboration Sections ---
+        renderNotes(applicant?.notes); // Pass notes array
+        renderVotes(applicant?.votes); // Pass votes object
+        // --- End Render ---           
+        if (noteAuthorEmailInput) noteAuthorEmailInput.value = currentUserEmail;
 
-           
+        console.log("Profile rendering complete, chat inputs populated.");
 
-
-            console.log("Profile rendering complete, chat inputs populated.");
-
-            console.log("Profile rendering complete.");
-        }
+        console.log("Profile rendering complete.");
+    }
    
     function renderWorkExperience(container, experiences) {
         console.log("Rendering Work Experience. Data:", experiences);
@@ -1226,6 +1348,86 @@ function renderEducation(container, educations) {
     }
 
    // --- Event Handlers (Add New Ones) ---
+   // Listener for Note Form Submission
+    if (addNoteForm) {
+        addNoteForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            if (!selectedApplicantId || !newNoteText || !noteAuthorEmailInput) return;
+
+            const noteData = {
+                noteText: newNoteText.value,
+                authorEmail: noteAuthorEmailInput.value // Use placeholder or real user
+            };
+
+            if (!noteData.noteText.trim()) {
+                alert("Note cannot be empty.");
+                return;
+            }
+
+            const submitButton = addNoteForm.querySelector('button[type="submit"]');
+            submitButton.disabled = true;
+            submitButton.textContent = 'Adding...';
+
+            try {
+                // Call backend to add note
+                const newNote = await apiRequest(`/api/applicants/${selectedApplicantId}/notes`, 'POST', noteData);
+
+                // Optimistic UI Update: Add note to local data and re-render
+                if (applicantsData[selectedApplicantId]) {
+                    applicantsData[selectedApplicantId].notes = applicantsData[selectedApplicantId].notes || [];
+                    applicantsData[selectedApplicantId].notes.unshift(newNote); // Add to beginning
+                    renderNotes(applicantsData[selectedApplicantId].notes); // Re-render only notes list
+                }
+                newNoteText.value = ''; // Clear textarea
+
+            } catch (error) {
+                alert(`Failed to add note: ${error.message}`);
+            } finally {
+                submitButton.disabled = false;
+                submitButton.textContent = 'Add Note';
+            }
+        });
+    }
+
+    // Listener for Vote Buttons (using event delegation on the container)
+    if (voteButtonsContainer) {
+        voteButtonsContainer.addEventListener('click', async (e) => {
+            // Check if a button inside the container was clicked
+            const button = e.target.closest('.vote-btn');
+            if (!button || !selectedApplicantId) return; // Exit if not a button or no applicant selected
+
+            const voteValue = button.dataset.vote; // Get 'yes', 'no', 'maybe', or ''
+            const voterEmail = currentUserEmail; // Use placeholder or real user
+
+            // Visually update buttons immediately (optimistic)
+            voteButtonsContainer.querySelectorAll('.vote-btn').forEach(btn => btn.classList.remove('selected-vote'));
+            if(voteValue !== '' && voteValue !== null){ // Don't highlight the clear button
+                button.classList.add('selected-vote');
+            }
+            // Disable clear button if appropriate
+            const clearBtn = voteButtonsContainer.querySelector('.clear-vote-btn');
+            if(clearBtn) clearBtn.disabled = (voteValue === '' || voteValue === null);
+
+
+            console.log(`Submitting vote: ${voterEmail} votes '${voteValue}' for ${selectedApplicantId}`);
+
+            try {
+                // Call backend to record vote
+                const updatedVotes = await apiRequest(`/api/applicants/${selectedApplicantId}/vote`, 'POST', { voterEmail, voteValue });
+
+                // Update local cache and re-render vote summary
+                if (applicantsData[selectedApplicantId]) {
+                    applicantsData[selectedApplicantId].votes = updatedVotes;
+                }
+                renderVotes(updatedVotes); // Re-render summary/buttons based on response
+
+            } catch (error) {
+                alert(`Failed to record vote: ${error.message}`);
+                // Revert optimistic UI update on error?
+                renderVotes(applicantsData[selectedApplicantId]?.votes); // Re-render based on previous state
+            }
+        });
+    }
    if(viewRankedApplicantsBtn) {
        viewRankedApplicantsBtn.addEventListener('click', () => {
            if (selectedJobId) {
@@ -1367,50 +1569,223 @@ function renderEducation(container, educations) {
      }
 
     function renderCurrentStageDetails(applicant) {
-        // Ensure elements exist
-        if (!currentStageNameSpan || !currentStageObjectivesSpan || !currentStageAssignedSpan || !feedbackStageIdInput || !currentStageFeedbackListDiv) {
-            console.error("DOM elements for current stage details are missing.");
-            return;
+        console.log("renderCurrentStageDetails called for applicant:", applicant?.id, "Current Stage ID:", applicant?.currentStageId);
+        console.log("Current stagesConfig state:", stagesConfig); 
+
+        if (!currentStageNameSpan || /* ... other checks ... */ !currentStageObjectivesList || !structuredFeedbackFormContainer || !currentStageFeedbackListDiv) {
+            console.error("DOM elements for current stage details are missing."); return;
         }
-        if (!stagesConfig || stagesConfig.length === 0) return; // Need config
+        if (!stagesConfig || stagesConfig.length === 0) { /* ... handle no config ... */ return; }
+
+        if (!stagesConfig || stagesConfig.length === 0) {
+            console.error("Stages config is empty or not loaded!");
+            // Display error message in UI
+            if(currentStageObjectivesList) currentStageObjectivesList.innerHTML = '<li>Error: Stage configuration missing.</li>';
+            if(structuredFeedbackFormContainer) structuredFeedbackFormContainer.innerHTML = '<p>Cannot load feedback form: Stage configuration missing.</p>';
+            return;
+       }
 
         const currentStageConfig = stagesConfig.find(s => s.id === applicant.currentStageId);
-        const currentStageHistory = applicant.stageHistory?.find(h => h.stageId === applicant.currentStageId); // Optional chaining
-
-        if (!currentStageConfig) {
-             console.warn("Could not find config for current stage:", applicant.currentStageId);
-             currentStageNameSpan.textContent = 'Unknown Stage';
-             currentStageObjectivesSpan.textContent = 'N/A';
-             currentStageAssignedSpan.textContent = 'N/A';
-             currentStageFeedbackListDiv.innerHTML = ''; // Clear feedback list
-             return;
-        }
+        const currentStageHistory = applicant.stageHistory?.find(h => h.stageId === applicant.currentStageId); // Find specific entry
+        console.log("Current stage config:", currentStageConfig);
+        if (!currentStageConfig) { /* ... handle missing config ... */ return; }
 
         currentStageNameSpan.textContent = currentStageConfig.name;
-        currentStageObjectivesSpan.textContent = Array.isArray(currentStageConfig.objectives) ? currentStageConfig.objectives.join(', ') : 'N/A';
         currentStageAssignedSpan.textContent = currentStageHistory?.assignedTo || 'N/A';
-        feedbackStageIdInput.value = applicant.currentStageId;
+        //feedbackStageIdInput.value = applicant.currentStageId; // Keep for old form? Or remove if old form deleted
 
-        currentStageFeedbackListDiv.innerHTML = ''; // Clear feedback list
-        const feedbackForStage = currentStageHistory?.feedback || [];
-        if (feedbackForStage.length > 0) {
-             feedbackForStage.forEach(fb => {
-                 const fbItem = document.createElement('div');
-                 fbItem.classList.add('feedback-item');
-                 fbItem.innerHTML = `
-                     <p>${escapeHtml(fb.comment)}</p>
-                     <strong>By:</strong> ${escapeHtml(fb.by)} |
-                     <strong>Rating:</strong> ${escapeHtml(fb.rating || 'N/A')} |
-                     <strong>On:</strong> ${new Date(fb.submittedAt).toLocaleString()}
-                 `;
-                 currentStageFeedbackListDiv.appendChild(fbItem);
-             });
-         } else {
-            currentStageFeedbackListDiv.innerHTML = '<p>No feedback yet for this stage.</p>';
-         }
+        // --- Render Objectives ---
+        currentStageObjectivesList.innerHTML = ''; // Clear
+        if (currentStageConfig.objectives && currentStageConfig.objectives.length > 0) {
+            currentStageConfig.objectives.forEach(obj => {
+                const li = document.createElement('li');
+                li.textContent = escapeHtml(obj);
+                currentStageObjectivesList.appendChild(li);
+            });
+        } else {
+             currentStageObjectivesList.innerHTML = '<li>No specific objectives defined for this stage.</li>';
+        }
 
+        // --- Render Submitted Feedback ---
+        renderSubmittedStructuredFeedback(currentStageHistory?.feedback); // Call helper
+
+        // --- Dynamically Build Feedback Form ---
+        buildStructuredFeedbackForm(applicant.id, applicant.currentStageId, currentStageConfig.objectives); // Call helper
+
+        // --- Populate Next Stage Options ---
         populateNextStageOptions(applicant.currentStageId);
-     }
+    } // End renderCurrentStageDetails
+
+
+    // --- NEW: Helper to Render Submitted Feedback ---
+    function renderSubmittedStructuredFeedback(feedbackArray) {
+        if (!currentStageFeedbackListDiv) return;
+        currentStageFeedbackListDiv.innerHTML = ''; // Clear
+
+        const feedback = feedbackArray || [];
+        if (feedback.length === 0) {
+            currentStageFeedbackListDiv.innerHTML = '<p><i>No feedback submitted yet for this stage.</i></p>';
+            return;
+        }
+
+        feedback.forEach(fb => {
+            const fbItem = document.createElement('div');
+            fbItem.classList.add('feedback-item');
+            const formattedTimestamp = new Date(fb.submittedAt).toLocaleString();
+
+            let objectiveRatingsHtml = '';
+            if (fb.objectiveRatings && fb.objectiveRatings.length > 0) {
+                 objectiveRatingsHtml = fb.objectiveRatings.map(or => `
+                     <div class="feedback-objective-rating">
+                         <strong>${escapeHtml(or.objective)}:</strong>
+                         ${or.rating ? `<span class="rating-stars">${'★'.repeat(or.rating)}${'☆'.repeat(5 - or.rating)}</span> (${or.rating}/5)` : '<em>No rating</em>'}
+                         ${or.comment ? `<p class="objective-comment">${escapeHtml(or.comment)}</p>` : ''}
+                     </div>
+                 `).join('');
+            }
+
+            fbItem.innerHTML = `
+                 <div class="note-meta"> <!-- Reuse note meta style -->
+                    <span class="note-author">${escapeHtml(fb.by)}</span>
+                    <span class="note-timestamp">${formattedTimestamp}</span>
+                 </div>
+                 ${fb.overallComment ? `<p class="feedback-overall-comment">${escapeHtml(fb.overallComment)}</p>` : ''}
+                 ${objectiveRatingsHtml}
+            `;
+            currentStageFeedbackListDiv.appendChild(fbItem);
+        });
+    }
+
+
+    // --- NEW: Helper to Build Feedback Form ---
+    function buildStructuredFeedbackForm(applicantId, stageId, objectives) {
+        console.log("Building structured feedback form for:", applicantId, stageId, objectives);
+        if (!structuredFeedbackFormContainer) return;
+        structuredFeedbackFormContainer.innerHTML = ''; // Clear previous form
+
+        const form = document.createElement('form');
+        form.id = 'structured-feedback-form'; // Use this ID for the event listener
+
+        // Add Objective Ratings section
+        (objectives || []).forEach((objective, index) => {
+            const blockDiv = document.createElement('div');
+            blockDiv.classList.add('objective-feedback-block');
+            blockDiv.dataset.objective = objective; // Store objective text
+
+            const label = document.createElement('label');
+            label.classList.add('objective-label');
+            label.htmlFor = `objective-rating-${index}`;
+            label.textContent = escapeHtml(objective);
+            blockDiv.appendChild(label);
+
+            // Rating Input (Example: Radios 1-5)
+            const ratingGroup = document.createElement('div');
+            ratingGroup.classList.add('rating-group');
+            ratingGroup.innerHTML += `<span>Rate (1-5): </span>`;
+            for (let i = 1; i <= 5; i++) {
+                 ratingGroup.innerHTML += `
+                    <label>
+                        <input type="radio" name="objective-rating-${index}" value="${i}"> ${i}
+                    </label>
+                 `;
+            }
+            ratingGroup.innerHTML += `<label><input type="radio" name="objective-rating-${index}" value="" checked> N/A</label>`; // Default/No Rating option
+            blockDiv.appendChild(ratingGroup);
+
+            // Comment Textarea for Objective
+            const commentTextarea = document.createElement('textarea');
+            commentTextarea.rows = 2;
+            commentTextarea.placeholder = `Comments specific to "${escapeHtml(objective)}"...`;
+            commentTextarea.id = `objective-comment-${index}`;
+            commentTextarea.dataset.objective = objective; // Link comment to objective
+            blockDiv.appendChild(commentTextarea);
+            console.log("Created objective textarea:", commentTextarea); // <-- ADD LOG
+
+            form.appendChild(blockDiv);
+        });
+        // After the loop, when creating the overall comment textarea
+        const overallCommentTextarea = form.querySelector('#overall-feedback-comment'); // Get reference AFTER adding via innerHTML
+        console.log("Overall comment textarea:", overallCommentTextarea); // <-- ADD LOG
+
+        // Add Overall Comment Textarea
+        const overallDiv = document.createElement('div');
+        overallDiv.classList.add('form-group'); // Reuse form-group style
+        overallDiv.innerHTML = `
+            <label for="overall-feedback-comment">Overall Comment for this Stage:</label>
+            <textarea id="overall-feedback-comment" rows="3" placeholder="General thoughts on performance in this stage..."></textarea>
+        `;
+        form.appendChild(overallDiv);
+
+        // Add hidden inputs and submit button
+        form.innerHTML += `
+            <input type="hidden" id="sfb-applicant-id" value="${escapeHtml(applicantId)}">
+            <input type="hidden" id="sfb-stage-id" value="${escapeHtml(stageId)}">
+            <input type="hidden" id="sfb-author-email" value="${escapeHtml(currentUserEmail)}"> <!-- Placeholder -->
+            <button type="submit" class="btn secondary-btn btn-small" style="float: right;">Submit Feedback</button>
+            <div style="clear: both;"></div> <!-- Clear float -->
+        `;
+
+        structuredFeedbackFormContainer.appendChild(form);
+
+        // --- Add Submit Listener to the NEW form ---
+        form.addEventListener('submit', handleStructuredFeedbackSubmit);
+
+    } // End buildStructuredFeedbackForm
+
+
+    // --- NEW: Submit Handler for Structured Feedback ---
+    async function handleStructuredFeedbackSubmit(event) {
+        event.preventDefault();
+        const form = event.target;
+        const submitButton = form.querySelector('button[type="submit"]');
+        submitButton.disabled = true;
+        submitButton.textContent = 'Submitting...';
+
+        const applicantId = form.querySelector('#sfb-applicant-id').value;
+        const stageId = form.querySelector('#sfb-stage-id').value;
+        const authorEmail = form.querySelector('#sfb-author-email').value;
+        const overallComment = form.querySelector('#overall-feedback-comment').value;
+
+        const objectiveRatings = [];
+        form.querySelectorAll('.objective-feedback-block').forEach((block, index) => {
+             const objective = block.dataset.objective;
+             const selectedRatingInput = block.querySelector(`input[name="objective-rating-${index}"]:checked`);
+             const rating = selectedRatingInput ? (selectedRatingInput.value ? parseInt(selectedRatingInput.value, 10) : null) : null; // Get rating value or null
+             const comment = block.querySelector(`#objective-comment-${index}`).value;
+
+             // Only include if rating or comment exists
+             if (rating !== null || comment.trim() !== '') {
+                objectiveRatings.push({ objective, rating, comment });
+             }
+        });
+
+        const feedbackData = { stageId, authorEmail, overallComment, objectiveRatings };
+
+        try {
+            const newFeedback = await apiRequest(`/api/applicants/${applicantId}/feedback`, 'POST', feedbackData);
+
+            // Optimistic UI update
+            if (applicantsData[applicantId]) {
+                 const stageEntry = applicantsData[applicantId].stageHistory?.find(h => h.stageId === stageId);
+                 if (stageEntry) {
+                      stageEntry.feedback = stageEntry.feedback || [];
+                      stageEntry.feedback.push(newFeedback);
+                      renderSubmittedStructuredFeedback(stageEntry.feedback); // Re-render list
+                 }
+            }
+             // Clear the form (more complex for dynamic fields)
+            form.querySelectorAll('textarea').forEach(ta => ta.value = '');
+            form.querySelectorAll('input[type="radio"]').forEach(rb => rb.checked = (rb.value === '')); // Reset radios to N/A
+
+            alert("Feedback submitted successfully!");
+
+        } catch (error) {
+            alert(`Failed to submit feedback: ${error.message}`);
+        } finally {
+            submitButton.disabled = false;
+            submitButton.textContent = 'Submit Feedback';
+        }
+    } // End handleStructuredFeedbackSubmit
 
     function renderRecruiterChatHistory(applicantId, jobId) {
            if (!recruiterChatHistoryDiv || !recruiterChatInput || !aiChatApplicantIdInput || !aiChatJobIdInput) return;
@@ -2034,6 +2409,7 @@ function renderEducation(container, educations) {
                 feedbackRatingInput.value = '';
                 alert("Feedback submitted successfully!");
                 const updatedApplicant = await loadApplicant(feedbackData.applicantId);
+                console.log("Updated applicant data after feedback submission:", updatedApplicant);
                 if (updatedApplicant) renderCurrentStageDetails(updatedApplicant); // Re-render stage details
             } catch (error) { /* Handled by apiRequest */ }
         });

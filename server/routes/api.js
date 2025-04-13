@@ -229,34 +229,51 @@ router.put('/applicants/:applicantId/stage', (req, res) => {
     }
 });
 // --- Feedback Routes ---
-router.post('/applicants/:applicantId/feedback', (req, res) => {
-     try {
-         const applicant = dataStore.getApplicant(req.params.applicantId);
-         const { stageId, feedbackBy, comment, rating } = req.body; // feedbackBy could be logged-in user email
+router.post('/applicants/:applicantId/feedback', async (req, res) => {
+    try {
+        const applicantId = req.params.applicantId;
+        // Expecting stageId, authorEmail, overallComment, and objectiveRatings array
+        const { stageId, authorEmail, overallComment, objectiveRatings } = req.body;
 
-         if (!applicant) return res.status(404).json({ message: 'Applicant not found' });
-         if (!stageId || !feedbackBy || !comment) {
-             return res.status(400).json({ message: 'Stage ID, feedback provider, and comment are required.' });
-         }
+        // Basic Validation
+        if (!stageId || !authorEmail || (!overallComment && !objectiveRatings)) {
+            return res.status(400).json({ message: 'Stage ID, author email, and at least an overall comment or objective ratings are required.' });
+        }
+        // Deeper validation of objectiveRatings structure if needed
 
-         const stageEntry = applicant.stageHistory.find(entry => entry.stageId === stageId); // Might need more specific logic if stages repeat
-         if (!stageEntry) {
-             return res.status(404).json({ message: `Stage history for ${stageId} not found.` });
-         }
+        const applicant = dataStore.getApplicant(applicantId);
+        if (!applicant) {
+            return res.status(404).json({ message: 'Applicant not found.' });
+        }
 
-         stageEntry.feedback.push({
-             by: feedbackBy,
-             comment: comment,
-             rating: rating || null, // Optional rating
-             submittedAt: new Date().toISOString()
-         });
+        // Find the relevant stage history entry
+        // IMPORTANT: This assumes stage IDs are unique in the history for now.
+        // For repeatable stages, you might need a stageInstanceId.
+        const stageEntry = applicant.stageHistory?.find(entry => entry.stageId === stageId && !entry.status?.includes('completed')); // Find active entry for stage
+        if (!stageEntry) {
+            return res.status(404).json({ message: `Active stage history entry for stage ${stageId} not found.` });
+        }
 
-         dataStore.updateApplicant(applicant);
-         res.status(201).json(stageEntry.feedback);
+        // Ensure feedback array exists
+        stageEntry.feedback = stageEntry.feedback || [];
+
+        const newFeedback = {
+            by: authorEmail, // In real app, get from authenticated user session
+            submittedAt: new Date().toISOString(),
+            overallComment: overallComment || '', // Ensure string
+            objectiveRatings: objectiveRatings || [] // Ensure array
+        };
+
+        stageEntry.feedback.push(newFeedback);
+
+        dataStore.updateApplicant(applicant); // Save the updated applicant
+
+        console.log(`Structured feedback added for applicant ${applicantId}, stage ${stageId} by ${authorEmail}`);
+        res.status(201).json(newFeedback); // Return the newly created feedback
 
     } catch (error) {
-        console.error("Error adding feedback:", error);
-        res.status(500).json({ message: 'Failed to add feedback' });
+        console.error("Error adding structured feedback:", error);
+        res.status(500).json({ message: 'Failed to add structured feedback.' });
     }
 });
 
@@ -279,9 +296,28 @@ router.post('/ai/assess-candidate', async (req, res) => {
         if (!job || !applicant || !question) {
             return res.status(400).json({ message: 'Job ID, Applicant ID, and Question are required.' });
         }
+        // --- Get History from Separate Store ---
+        const currentHistory = dataStore.getRecruiterChatHistory(jobId, applicantId);
+        // Prepare context for Gemini if needed (use currentHistory)
+        const contextForGemini = currentHistory.slice(-8); // Example
+        // --- End Get History ---
+        const modelResponse = await geminiService.assessCandidate(job, applicant, question /*, contextForGemini */);
 
-        const assessment = await geminiService.assessCandidate(job, applicant, question);
-        res.json({ assessment: assessment });
+        // --- Append to History Array (in memory) ---
+        const updatedHistory = [
+             ...currentHistory, // Get existing messages
+             { role: 'user', parts: [{ text: question }] },
+             { role: 'model', parts: [{ text: modelResponse }] }
+        ];
+        // --- End Append ---
+
+        // --- Save Updated History to Separate Store ---
+        dataStore.updateRecruiterChatHistory(jobId, applicantId, updatedHistory);
+        console.log(`Updated chat history saved for applicant ${applicantId} / job ${jobId}.`);
+        // --- End Save ---
+
+        // Send ONLY the latest AI response back
+        res.status(200).json({ assessment: modelResponse });
     } catch (error) {
         res.status(500).json({ message: 'Failed to assess candidate via AI' });
     }
@@ -553,12 +589,104 @@ router.get('/applicants/:applicantId/interview-prep', async (req, res) => {
 router.get('/applicants/:applicantId/parsed', (req, res) => {
     const applicant = dataStore.getApplicant(req.params.applicantId);
     if (applicant) {
-        // Return only the relevant parsed fields, maybe exclude internal state
-        const { name, email, phone, parsedSummary, workExperience, skills, education, certifications, advancedFields, careerTrajectory, discrepancies } = applicant;
-        res.json({ name, email, phone, parsedSummary, workExperience, skills, education, certifications, advancedFields, careerTrajectory, discrepancies });
+        const { id, jobId, currentStageId, stageHistory, notes, votes, name, email, phone, parsedSummary, workExperience, skills, education, certifications, advancedFields, careerTrajectory, discrepancies, originalCvPath } = applicant;
+        res.json({ id, jobId, currentStageId, stageHistory, notes, votes, name, email, phone, parsedSummary, workExperience, skills, education, certifications, advancedFields, careerTrajectory, discrepancies, originalCvPath});
     } else {
         res.status(404).json({ message: 'Applicant not found' });
     }
 });
+// --- NEW: Add a Note ---
+router.post('/applicants/:applicantId/notes', async (req, res) => {
+    try {
+        const applicantId = req.params.applicantId;
+        const { noteText, authorEmail } = req.body; // Get text and author (replace with real auth later)
 
+        if (!noteText || !authorEmail) {
+            return res.status(400).json({ message: 'Note text and author email are required.' });
+        }
+
+        const applicant = dataStore.getApplicant(applicantId);
+        if (!applicant) {
+            return res.status(404).json({ message: 'Applicant not found.' });
+        }
+
+        // Ensure notes array exists
+        applicant.notes = applicant.notes || [];
+
+        const newNote = {
+            by: authorEmail, // In real app, get from authenticated user session
+            timestamp: new Date().toISOString(),
+            text: noteText
+        };
+
+        applicant.notes.push(newNote); // Add to the start for reverse chrono: applicant.notes.unshift(newNote);
+        applicant.notes.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)); // Sort descending
+
+        dataStore.updateApplicant(applicant); // Save the updated applicant
+
+        console.log(`Note added for applicant ${applicantId} by ${authorEmail}`);
+        res.status(201).json(newNote); // Return the newly created note
+
+    } catch (error) {
+        console.error("Error adding note:", error);
+        res.status(500).json({ message: 'Failed to add note.' });
+    }
+});
+
+
+// --- NEW: Add/Update a Vote ---
+router.post('/applicants/:applicantId/vote', async (req, res) => {
+    try {
+        const applicantId = req.params.applicantId;
+        const { voterEmail, voteValue } = req.body; // voteValue: 'yes', 'no', 'maybe', or potentially null/'' to clear vote
+
+        // Basic validation for vote value
+        const validVotes = ['yes', 'no', 'maybe', '', null];
+        if (!voterEmail || !validVotes.includes(voteValue)) {
+            return res.status(400).json({ message: 'Voter email and a valid vote value (yes, no, maybe, null, or empty) are required.' });
+        }
+
+        const applicant = dataStore.getApplicant(applicantId);
+        if (!applicant) {
+            return res.status(404).json({ message: 'Applicant not found.' });
+        }
+
+        // Ensure votes object exists
+        applicant.votes = applicant.votes || {};
+
+        if (voteValue === '' || voteValue === null) {
+            // Allow clearing a vote
+            delete applicant.votes[voterEmail];
+            console.log(`Vote cleared for applicant ${applicantId} by ${voterEmail}`);
+        } else {
+            applicant.votes[voterEmail] = voteValue; // Add or update the vote
+            console.log(`Vote '${voteValue}' recorded for applicant ${applicantId} by ${voterEmail}`);
+        }
+
+        dataStore.updateApplicant(applicant); // Save the updated applicant
+
+        res.status(200).json(applicant.votes); // Return the updated votes object
+
+    } catch (error) {
+        console.error("Error recording vote:", error);
+        res.status(500).json({ message: 'Failed to record vote.' });
+    }
+});
+// --- NEW: Get Recruiter Chat History ---
+router.get('/chats/:jobId/:applicantId', (req, res) => {
+    try {
+        const { jobId, applicantId } = req.params;
+        if (!jobId || !applicantId) {
+            return res.status(400).json({ message: "Job ID and Applicant ID are required." });
+        }
+        // Optional: Check if job/applicant actually exist for better validation
+        const history = dataStore.getRecruiterChatHistory(jobId, applicantId);
+        res.status(200).json({ history: history });
+
+    } catch (error) {
+        console.error("Error fetching chat history:", error);
+        res.status(500).json({ message: "Failed to fetch chat history." });
+    }
+});
+// --- End New Route ---
 module.exports = router;
