@@ -22,6 +22,16 @@
     --border-radius: 8px; /* More rounded corners */
     --card-shadow: 0 1px 2px 0 rgba(60,64,67,.3), 0 1px 3px 1px rgba(60,64,67,.15); /* Subtle shadow */
     --focus-shadow: 0 0 0 2px var(--background-light), 0 0 0 4px var(--focus-ring-color);
+    --sidebar-width: 260px;
+    --sidebar-width-collapsed: 60px;
+    --sidebar-bg: var(--background-white); /* Use main surface bg */
+    --sidebar-border: var(--border-color);
+    --nav-button-hover-bg: rgba(66, 133, 244, 0.08); /* Light blue wash */
+    --nav-button-active-bg: rgba(66, 133, 244, 0.15);
+    --nav-button-text: var(--text-secondary);
+    --nav-button-active-text: var(--google-blue);
+    --hub-option-hover-bg: var(--background-light);
+    --hub-option-border: var(--border-color);
 }
 /* --- NEW: Dark Mode Variable Overrides --- */
 body.dark-theme {
@@ -47,10 +57,236 @@ body.dark-theme {
     /* You might need specific overrides for other variables too */
     /* e.g., link colors, specific component backgrounds */
     color-scheme: dark; /* Hint for browser UI like scrollbars */
+    --sidebar-bg: #2c3136;
+    --sidebar-border: #3c4043;
+    --nav-button-hover-bg: rgba(138, 180, 248, 0.08);
+    --nav-button-active-bg: rgba(138, 180, 248, 0.15);
+    --nav-button-text: #9aa0a6;
+    --nav-button-active-text: #8ab4f8; /* Lighter blue */
+    --hub-option-hover-bg: #3c4043;
+    --hub-option-border: #5f6368;
 }
 
+/* --- NEW Main Layout --- */
+.main-layout {
+    display: flex;
+    flex: 1; /* Take remaining height */
+    overflow: hidden; /* Prevent main scrollbars if sidebar scrolls */
+}
 
+/* --- NEW Main Sidebar --- */
+.main-sidebar {
+    flex: 0 0 var(--sidebar-width); /* Initial width */
+    background-color: var(--sidebar-bg);
+    border-right: 1px solid var(--sidebar-border);
+    padding: 1rem 0; /* Vertical padding, no horizontal */
+    display: flex;
+    flex-direction: column;
+    transition: flex-basis 0.3s ease-in-out, padding 0.3s ease-in-out;
+    overflow-x: hidden; /* Hide text when collapsed */
+    position: relative; /* For toggle button positioning */
+}
+.main-sidebar nav ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+.main-sidebar nav li {
+    margin-bottom: 0.5rem;
+}
+.nav-button {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    padding: 0.75rem 1.5rem; /* Adjust padding */
+    background: none;
+    border: none;
+    color: var(--nav-button-text);
+    font-size: var(--small-font-size);
+    font-weight: 500;
+    text-align: left;
+    cursor: pointer;
+    border-radius: 0 25px 25px 0; /* Rounded right side */
+    transition: background-color 0.2s ease, color 0.2s ease;
+    white-space: nowrap; /* Prevent text wrapping */
+}
+.nav-button .material-icons {
+    margin-right: 1rem;
+    font-size: 1.3rem;
+    vertical-align: middle;
+}
+.nav-button:hover {
+    background-color: var(--nav-button-hover-bg);
+}
+.nav-button.active {
+    background-color: var(--nav-button-active-bg);
+    color: var(--nav-button-active-text);
+}
+.nav-button .nav-text {
+    opacity: 1;
+    transition: opacity 0.2s ease 0.1s; /* Delay text fade */
+}
+
+/* Collapsed Sidebar Styles */
+.main-sidebar.collapsed {
+    flex-basis: var(--sidebar-width-collapsed);
+    padding: 1rem 0;
+}
+.main-sidebar.collapsed .nav-button {
+    padding: 0.75rem;
+    justify-content: center; /* Center icon */
+    border-radius: 50%; /* Make it circular */
+    width: 44px; /* Fixed width */
+    height: 44px;
+    margin: 0 auto 0.5rem auto; /* Center buttons horizontally */
+}
+.main-sidebar.collapsed .nav-button .material-icons {
+    margin-right: 0; /* No margin when icon only */
+}
+.main-sidebar.collapsed .nav-button .nav-text {
+    opacity: 0;
+    position: absolute; /* Remove from flow */
+    pointer-events: none;
+}
+/* Toggle Button */
+#sidebar-toggle-btn {
+    position: absolute;
+    bottom: 1rem;
+    left: 50%;
+    transform: translateX(-50%);
+    background: none;
+    border: 1px solid var(--border-color);
+    border-radius: 50%;
+    cursor: pointer;
+    padding: 5px;
+    line-height: 0; /* Remove extra space */
+    color: var(--text-secondary);
+    transition: transform 0.3s ease;
+}
+.main-sidebar.collapsed #sidebar-toggle-btn {
+    transform: translateX(-50%) rotate(180deg); /* Rotate icon */
+}
+#sidebar-toggle-btn .material-icons {
+    font-size: 1.2rem;
+    display: block;
+}
+
+/* --- Main Content Area --- */
+.main-content {
+    flex: 1;
+    overflow-y: auto; /* Allow content to scroll if needed */
+    padding: 0; /* Remove padding, add to inner sections */
+    position: relative; /* For potential absolute positioning inside */
+    background-color: var(--background-light); /* Match body */
+}
+
+/* Style for the main section views */
+.main-section-view {
+    padding: 2rem; /* Add padding INSIDE main sections */
+    /* display: none; Handled by .view */
+}
+
+/* --- Navigation Hub Styles --- */
+.nav-hub h2 {
+    text-align: center;
+    margin-bottom: 1rem;
+}
+.nav-hub > p { /* Targeting direct p child */
+    text-align: center;
+    color: var(--text-secondary);
+    margin-bottom: 2.5rem;
+}
+.hub-options {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); /* Responsive columns */
+    gap: 1.5rem;
+}
+.hub-option {
+    background-color: var(--content-bg); /* Use card background */
+    border: 1px solid var(--hub-option-border);
+    border-radius: var(--border-radius);
+    padding: 1.5rem;
+    text-align: center;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+    box-shadow: var(--card-shadow);
+}
+.hub-option:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 4px 8px rgba(60, 64, 67, 0.15), 0 2px 6px rgba(60, 64, 67, 0.1);
+    border-color: var(--google-blue);
+}
+body.dark-theme .hub-option:hover {
+     box-shadow: 0 4px 8px rgba(0,0,0,0.3), 0 2px 6px rgba(0,0,0,0.2);
+     border-color: var(--focus-ring-color);
+}
+.hub-icon {
+    font-size: 2.5rem;
+    color: var(--google-blue);
+    margin-bottom: 1rem;
+    display: block;
+}
+.hub-option h3 {
+    margin-bottom: 0.5rem;
+    font-size: 1.1rem;
+}
+.hub-option p {
+    font-size: var(--small-font-size);
+    color: var(--text-secondary);
+    margin-bottom: 0;
+    line-height: 1.4;
+}
 /* --- Component Adjustments for Dark Mode --- */
+/* --- Jobs Main View Layout --- */
+.jobs-layout {
+    display: flex;
+    gap: 1.5rem; /* Gap between jobs sidebar and jobs content */
+    height: 100%; /* Or adjust as needed */
+}
+.jobs-sidebar { /* Reuse sidebar styles but maybe different width/padding */
+    flex: 0 0 280px; /* Same as original */
+    /* Remove right border if main sidebar has it */
+    border-right: none;
+    /* Add back padding if removed from main sidebar */
+     padding: 1rem;
+     height: calc(100vh - 60px - 4rem); /* Example height calc (viewport - header - padding) */
+     overflow-y: auto; /* Scroll jobs list if long */
+}
+.jobs-content {
+    flex: 1;
+    padding: 0; /* Remove padding, views inside have it */
+    /* Remove border/shadow if parent main-section-view has it */
+    border: none;
+    box-shadow: none;
+    background-color: transparent; /* Inherit from parent */
+}
+
+/* --- View Switching within Main Sections --- */
+/* Nested views need relative positioning if needed */
+.nested-view {
+    display: none; /* Hide nested views by default */
+    padding: 2rem; /* Add padding back to nested views */
+    background-color: var(--content-bg); /* Card background */
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius);
+    box-shadow: var(--card-shadow);
+}
+.nested-view.active {
+    display: block; /* Show active nested view */
+    /* Use grid for profile view: */
+    /* &.applicant-profile-grid { display: grid; } */ /* Handled by combined selector now */
+}
+/* Selector for active profile grid inside active jobs view */
+.main-section-view.active .nested-view.active#applicant-details-view .applicant-profile-grid {
+    display: grid;
+}
+/* --- Candidates Main View --- */
+#candidates-main-view h2 { /* ... */ }
+#all-candidates-list-container {
+     margin-top: 1rem;
+     /* Add styles for candidate list table/cards */
+}
+
 /* Add specific overrides ONLY if variables aren't enough */
 
 /* Example: Ensure secondary button text is readable */
@@ -1320,12 +1556,7 @@ hr {
     width: auto; /* Don't force full width */
 }
 
-#ranked-applicant-list-container {
-    /* Styles for table or cards would go here */
-    /* Example for basic table */
-    width: 100%;
-    border-collapse: collapse;
-}
+
 #ranked-applicant-list-container th,
 #ranked-applicant-list-container td {
     padding: 0.8rem 0.5rem;
@@ -1939,4 +2170,17 @@ body.dark-theme .potential-match-item {
 }
  body.dark-theme .potential-match-item:hover {
     background-color: rgba(138, 180, 248, 0.12);
+}
+
+/* Style when list is filtered */
+#ranked-applicant-list-container.filtered::before {
+     content: 'Displaying filtered results.';
+     display: block;
+     padding: 0.5rem;
+     font-style: italic;
+     font-size: var(--small-font-size);
+     color: var(--text-secondary);
+     background-color: var(--background-light);
+     border-bottom: 1px solid var(--border-color);
+     margin-bottom: 0.5rem;
 }

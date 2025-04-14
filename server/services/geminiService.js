@@ -344,7 +344,7 @@ async function rankApplicantsForJob(targetJob, applicantsToRank) {
                 // 3. Remove Trailing Commas
                 workString = workString.replace(/,\s*([}\]])/g, '$1');
                 console.log(`Final string before parse for ${applicant.id}:`, workString.substring(0, 100) + "...");
-                
+
 
                 const rankingResult = JSON.parse(workString);
 
@@ -352,7 +352,8 @@ async function rankApplicantsForJob(targetJob, applicantsToRank) {
                  if (typeof rankingResult.overallScore !== 'number' || typeof rankingResult.skillMatch !== 'number') {
                      throw new Error("AI response did not contain valid numeric scores.");
                  }
-
+                 console.log(`Parsed ranking result for ${applicant.id}:`, JSON.stringify(rankingResult, null, 2));
+                 
                 // --- Structure the final ranking data ---
                 const newRanking = {
                     overallScore: Math.round(rankingResult.overallScore ?? 0),

@@ -6,7 +6,7 @@ console.log("Imported dataStore keys:", Object.keys(dataStore)); // <--- for deb
 const apiRoutes = require('./routes/api');
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3010;
 
 console.log("Starting server...");
 

@@ -71,7 +71,7 @@ document.addEventListener('DOMContentLoaded', () => {
     prefersDark.addEventListener('change', applySystemTheme);
     console.log("Added listener for system theme changes.");
     // --- END: Automatic System Theme Detection ---
-
+    
     // --- Get References to Splash and App Container ---
     let rankingChartInstance = null; // Store chart instance for later use
     const splashScreen = document.getElementById('splash-screen');
@@ -198,6 +198,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const applicantSearchInput = document.getElementById('applicant-search');
     const applicantSortSelect = document.getElementById('applicant-sort');
     const toggleAnonymizeBtn = document.getElementById('toggle-anonymize-btn');
+    console.log("toggleAnonymizeBtn element:", toggleAnonymizeBtn); // <-- Add log here
     const backToJobConfigBtn = document.getElementById('back-to-job-config-btn');
     
     const backToRankedListFromProfileBtn = document.getElementById('back-to-ranked-list-from-profile-btn');
@@ -270,6 +271,49 @@ document.addEventListener('DOMContentLoaded', () => {
     //         console.log(`Theme set to: ${theme}`);
     //     });
     // }
+    function filterAndSortApplicants() {
+        if (!currentRankedApplicants) return; // No base data
+
+        const searchTerm = applicantSearchInput.value.toLowerCase().trim();
+        const sortValue = applicantSortSelect.value;
+
+        // 1. Filter based on search term
+        let filteredApplicants = currentRankedApplicants.filter(app => {
+            if (!searchTerm) return true; // Show all if search is empty
+            const name = app.name?.toLowerCase() || '';
+            const email = app.email?.toLowerCase() || ''; // Include email in search
+            // Don't search anonymized name
+            if (anonymizedView && name.startsWith('candidate ')) return false;
+             return name.includes(searchTerm) || email.includes(searchTerm);
+        });
+
+        rankedListContainer.classList.toggle('filtered', searchTerm !== '');
+        // 2. Sort the filtered list
+        filteredApplicants.sort((a, b) => {
+            switch (sortValue) {
+                case 'score_asc':
+                    return (a.overallScore || 0) - (b.overallScore || 0);
+                case 'name_asc':
+                    // Handle anonymized view - sort by ID if needed, otherwise name
+                     const nameA = anonymizedView ? a.id : (a.name || '').toLowerCase();
+                     const nameB = anonymizedView ? b.id : (b.name || '').toLowerCase();
+                     return nameA.localeCompare(nameB);
+                 case 'name_desc':
+                     const nameZa = anonymizedView ? a.id : (a.name || '').toLowerCase();
+                     const nameZb = anonymizedView ? b.id : (b.name || '').toLowerCase();
+                     return nameZb.localeCompare(nameZa); // Reversed compare
+                case 'stage_asc':
+                    const stageA = (a.currentStage || '').toLowerCase();
+                    const stageB = (b.currentStage || '').toLowerCase();
+                    return stageA.localeCompare(stageB);
+                case 'score_desc': // Default case
+                default:
+                    return (b.overallScore || 0) - (a.overallScore || 0);
+            }
+        });
+        // 3. Render the processed list
+        renderRankedApplicantList(filteredApplicants); // Pass the filtered and sorted array
+    } // End filterAndSortApplicants
 
     if (splashScreen && appContainer) {
         // Set timeout for splash screen
@@ -1297,11 +1341,10 @@ function renderEducation(container, educations) {
         try {
             // Fetch ranked data (backend handles ranking logic)
             let rankedData = await apiRequest(`/api/jobs/${jobId}/applicants/ranked`);
-
-            // Apply frontend sorting/filtering if needed
-            // TODO: Implement sorting based on applicantSortSelect.value
-            // TODO: Implement filtering based on applicantSearchInput.value
-
+            
+            currentRankedApplicants = rankedData || []; // Update the MASTER cache
+            filterAndSortApplicants(); // Filter/Sort the newly fetched data IMMEDIATELY
+            
             currentRankedApplicants = rankedData; // Cache the full ranked list
             renderRankedApplicantList(currentRankedApplicants); // Render the possibly filtered/sorted list
             showView('ranked-list-view');
@@ -1368,6 +1411,7 @@ function renderEducation(container, educations) {
         // --- End Table Example ---
         // --- Update Anonymize Button Text/Icon AFTER rendering ---
         if (toggleAnonymizeBtn) {
+            console.log("Updating anonymize button text/icon...");
             toggleAnonymizeBtn.innerHTML = anonymizedView
                 ? '<span class="material-icons">visibility</span> Show Names'
                 : '<span class="material-icons">visibility_off</span> Anonymize';
@@ -1376,26 +1420,6 @@ function renderEducation(container, educations) {
         }
     }
 
-    if (toggleAnonymizeBtn) {
-        toggleAnonymizeBtn.addEventListener('click', () => {
-           anonymizedView = !anonymizedView; // Toggle the state flag
-           console.log("Anonymized view toggled to:", anonymizedView);
-    
-           // Re-render the list using the *cached* applicant data but applying the new flag state
-           renderRankedApplicantList(currentRankedApplicants); // Pass the currently loaded data
-    
-            // Also update the state of the profile view IF it's currently active for this applicant
-            if (selectedApplicantId && document.getElementById('applicant-details-view')?.classList.contains('active')) {
-                 console.log("Updating currently viewed profile for anonymization state...");
-                 // Re-fetch or just re-render using cached data but applying the flag
-                 const applicantData = applicantsData[selectedApplicantId]; // Assuming parsed data is in applicantsData
-                 const rankingInfo = currentRankedApplicants.find(app => app.id === selectedApplicantId);
-                 if (applicantData && rankingInfo) {
-                     renderCandidateProfile(applicantData, rankingInfo); // Re-render profile
-                 }
-            }
-        });
-    }
 
    // --- Event Handlers (Add New Ones) ---
    // Listener for Note Form Submission
@@ -1513,13 +1537,7 @@ function renderEducation(container, educations) {
            }
         });
    }
-    // if (toggleAnonymizeBtn) {
-    //     toggleAnonymizeBtn.addEventListener('click', () => {
-    //        anonymizedView = !anonymizedView; // Toggle state
-    //        toggleAnonymizeBtn.innerHTML = anonymizedView ? '<span class="material-icons">visibility</span> Show Names' : '<span class="material-icons">visibility_off</span> Anonymize';
-    //        renderRankedApplicantList(currentRankedApplicants); // Re-render list with new state
-    //     });
-    // }
+   
      
      if (regenerateSummaryBtn) {
         regenerateSummaryBtn.addEventListener('click', async (event) => {
@@ -2641,6 +2659,37 @@ async function handleShortlistClick(event) {
         });
     }
 
+    if (applicantSearchInput) {
+        applicantSearchInput.addEventListener('input', () => {
+            // Use debounce here if needed for performance on large lists
+            filterAndSortApplicants(); // Re-filter and re-render on input
+        });
+    }
+
+    if (applicantSortSelect) {
+        applicantSortSelect.addEventListener('change', () => {
+            filterAndSortApplicants(); // Re-sort and re-render on change
+        });
+    }
+
+    if (toggleAnonymizeBtn) {
+        toggleAnonymizeBtn.addEventListener('click', () => {
+           anonymizedView = !anonymizedView;
+           console.log("Anonymized view toggled to:", anonymizedView);
+           filterAndSortApplicants(); // Re-filter/sort AND re-render list with new state
+
+           // Update profile view IF active (keep this part)
+           if (selectedApplicantId && document.getElementById('applicant-details-view')?.classList.contains('active')) {
+                console.log("Updating currently viewed profile for anonymization state..."); // Keep this log
+                // Re-fetch or just re-render using cached data but applying the flag
+                const applicantData = applicantsData[selectedApplicantId];
+                const rankingInfo = currentRankedApplicants.find(app => app.id === selectedApplicantId);
+                if (applicantData && rankingInfo) {
+                    renderCandidateProfile(applicantData, rankingInfo); // Re-render profile
+                }
+           }
+        });
+    }
     // if (recruiterChatForm) {
     //     recruiterChatForm.addEventListener('submit', async (e) => {
     //         e.preventDefault();
@@ -2745,50 +2794,7 @@ async function handleShortlistClick(event) {
              }
         }
     }
-    // --- Initialization ---
-    // NOTE: loadInitialData() is now called from the setTimeout callback
-    // Do not call it directly here anymore.
-    // loadInitialData();
-// --- Initialization ---
-    // async function initialize() {
-    //     const path = window.location.pathname;
-    //     console.log("Candidate Initialize: Starting. Pathname is:", path); // <-- ADD THIS
-    //     const applyMatch = path.match(/^\/apply\/([a-zA-Z0-9_]+)$/);
-    //     const portalMatch = path.match(/^\/portal\/([a-zA-Z0-9_]+)$/);
-
-    //     try {
-    //         // Load stages config needed for portal display
-    //         stagesConfig = await apiRequest('/api/config/stages');
-
-    //         if (applyMatch) {
-    //             currentMode = 'submit';
-    //             jobId = applyMatch[1];
-    //             submitJobIdInput.value = jobId; // Set hidden field
-    //             const jobData = await apiRequest(`/api/jobs/${jobId}`);
-    //             submitJobTitleH2.textContent = `Apply for ${jobData?.title || 'Job'}`;
-    //             pageTitle.textContent = `Apply for ${jobData?.title || 'Job'}`;
-    //             showView('submit-view');
-    //         } else if (portalMatch) {
-    //             currentMode = 'portal';
-    //             applicantId = portalMatch[1];
-    //             pageTitle.textContent = 'Application Portal';
-    //             // Fetch applicant *and* job data needed for display
-    //             const applicantData = await apiRequest(`/api/applicants/${applicantId}`); // Fetch full applicant data
-    //             const jobData = applicantData ? await apiRequest(`/api/jobs/${applicantData.jobId}`) : null;
-    //             if (applicantData && jobData) {
-    //                 renderPortalData(applicantData, jobData);
-    //             } else {
-    //                 showError('Could not load applicant or job details.');
-    //             }
-    //         } else {
-    //             showError('Invalid URL.');
-    //         }
-    //     } catch (error) {
-    //         // Error already shown by apiRequest helper or specific catches
-    //         showView('error-view');
-    //     }
-    // }
-    // initialize();
+   
 }); // End DOMContentLoaded listener
 
 // --- END OF public/app.js ---
