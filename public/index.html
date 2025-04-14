@@ -25,10 +25,10 @@
         <header>
             <h1 class="animated-gradient-header">Talenta AI Agent</h1>
             <!-- Dark Mode Toggle Button -->
-            <button id="theme-toggle-btn" class="btn secondary-btn theme-toggle" title="Toggle Theme">
+            <!-- <button id="theme-toggle-btn" class="btn secondary-btn theme-toggle" title="Toggle Theme">
                 <span class="material-icons light-icon">light_mode</span>
                 <span class="material-icons dark-icon">dark_mode</span>
-            </button>
+            </button> -->
     <!-- End Toggle -->
         </header>
 
@@ -148,6 +148,16 @@
                      <div class="job-config-section">
                         <h5>Job Configuration (Placeholder)</h5>
                         <p>Details about extracted keywords and ranking model weights for this job would go here.</p>
+                    </div>
+                    <!--Potential candidate matches from other JOb Id for This Job Id-->
+                    <div class="potential-matches-section job-section" style="display: none;"> <!-- Start hidden -->
+                        <h5 class="section-header">Potential Matches from Other Postings</h5>
+                        <p class="subtle-text">Our AI found these existing candidates who might be a good fit for this new role:</p>
+                        <div id="potential-matches-list">
+                            <p><i>Checking existing applicants...</i></p>
+                            <!-- List of potential matches will be rendered here -->
+                        </div>
+                        <!-- Optional: Button to trigger search again? -->
                     </div>
                 </div>
 

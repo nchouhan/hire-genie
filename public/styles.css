@@ -24,7 +24,7 @@
     --focus-shadow: 0 0 0 2px var(--background-light), 0 0 0 4px var(--focus-ring-color);
 }
 /* --- NEW: Dark Mode Variable Overrides --- */
-body.dark-mode {
+body.dark-theme {
     /* Invert background and text colors */
     --text-primary: #e8eaed;         /* Light gray text */
     --text-secondary: #9aa0a6;       /* Lighter gray secondary text */
@@ -48,67 +48,66 @@ body.dark-mode {
     /* e.g., link colors, specific component backgrounds */
     color-scheme: dark; /* Hint for browser UI like scrollbars */
 }
-/* --- END Dark Mode Overrides --- */
 
 
 /* --- Component Adjustments for Dark Mode --- */
 /* Add specific overrides ONLY if variables aren't enough */
 
 /* Example: Ensure secondary button text is readable */
-body.dark-mode .secondary-btn {
+body.dark-theme .secondary-btn {
     color: var(--google-blue); /* Use the lighter blue defined in dark mode */
     background-color: #3c4043; /* Slightly darker background */
     border-color: #5f6368; /* Gray border */
 }
- body.dark-mode .secondary-btn:hover {
+ body.dark-theme .secondary-btn:hover {
     background-color: #4a4d52; /* Slightly lighter on hover */
  }
 
 /* Example: Adjust hover states */
-body.dark-mode #job-list .job-item:hover,
-body.dark-mode #applicant-list .applicant-item:hover {
+body.dark-theme #job-list .job-item:hover,
+body.dark-theme #applicant-list .applicant-item:hover {
     background-color: rgba(255, 255, 255, 0.05); /* Very subtle light wash */
 }
-body.dark-mode #job-list .job-item.selected {
+body.dark-theme #job-list .job-item.selected {
     background-color: rgba(138, 180, 248, 0.1); /* Lighter blue wash for selection */
     border-left-color: var(--focus-ring-color); /* Use the lighter blue */
 }
 
 /* Example: Ensure chat bubbles have contrast */
- body.dark-mode .chat-message.user {
+ body.dark-theme .chat-message.user {
     background-color: #304970; /* Darker blue */
     color: #e8eaed;
 }
- body.dark-mode .chat-message.model {
+ body.dark-theme .chat-message.model {
     background-color: #3c4043; /* Dark gray */
     color: #e8eaed;
 }
 
  /* Example: Ensure output/original boxes have contrast */
- body.dark-mode .output-area,
- body.dark-mode #job-details-full-desc, /* If still used */
- body.dark-mode .original-content {
+ body.dark-theme .output-area,
+ body.dark-theme #job-details-full-desc, /* If still used */
+ body.dark-theme .original-content {
      background-color: var(--background-light); /* Use dark main bg */
      border-color: var(--border-color);
      color: var(--text-primary);
  }
- body.dark-mode #enhancement-rationale {
+ body.dark-theme #enhancement-rationale {
      background-color: var(--background-light);
      border-color: var(--border-color);
  }
 
  /* Example: Input/Textarea background */
- body.dark-mode .form-group input[type="text"],
- body.dark-mode .form-group input[type="email"],
+ body.dark-theme .form-group input[type="text"],
+ body.dark-theme .form-group input[type="email"],
  /* ... other inputs/selects ... */
- body.dark-mode .form-group textarea {
+ body.dark-theme .form-group textarea {
      background-color: #303134; /* Slightly different dark for inputs */
      border-color: var(--border-color);
      color: var(--text-primary);
  }
-  body.dark-mode .form-group input:focus,
-  body.dark-mode .form-group select:focus,
-  body.dark-mode .form-group textarea:focus {
+  body.dark-theme .form-group input:focus,
+  body.dark-theme .form-group select:focus,
+  body.dark-theme .form-group textarea:focus {
      border-color: var(--focus-ring-color);
      box-shadow: 0 0 0 1px var(--focus-ring-color);
      background-color: #3c4043;
@@ -132,8 +131,8 @@ body.dark-mode #job-list .job-item.selected {
 .theme-toggle .dark-icon { display: inline-block; } /* Show moon by default (light mode) */
 .theme-toggle .light-icon { display: none; }
 
-body.dark-mode .theme-toggle .dark-icon { display: none; }
-body.dark-mode .theme-toggle .light-icon { display: inline-block; }
+body.dark-theme .theme-toggle .dark-icon { display: none; }
+body.dark-theme .theme-toggle .light-icon { display: inline-block; }
 
 body {
     font-family: var(--font-family-sans-serif);
@@ -1834,4 +1833,110 @@ body.dark-theme.candidate-page {
     margin-left: 2.5rem; /* Indent objective comment */
     font-size: 0.95em;
     color: var(--text-secondary);
+}
+
+/* --- Potential Matches Section --- */
+.potential-matches-section {
+    /* Inherits .job-section styles */
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border-color);
+    background-color: rgba(66, 133, 244, 0.04); /* Subtle blue background */
+    border-radius: var(--border-radius);
+    padding: 1.5rem; /* Add padding */
+}
+.potential-matches-section .subtle-text {
+    margin-bottom: 1rem;
+}
+
+#potential-matches-list {
+    max-height: 400px; /* Limit height if list gets long */
+    overflow-y: auto;
+}
+
+.potential-match-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.potential-match-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 0.5rem;
+    border-bottom: 1px solid var(--border-color-light); /* Lighter border */
+    cursor: pointer;
+    transition: background-color var(--base-transition);
+}
+.potential-match-item:last-child {
+    border-bottom: none;
+}
+.potential-match-item:hover {
+    background-color: rgba(66, 133, 244, 0.08); /* Slightly darker blue wash */
+}
+.potential-match-item .match-info {
+    /* Takes up most space */
+    flex-grow: 1;
+    margin-right: 1rem; /* Space before score/button */
+}
+
+.potential-match-item .match-info strong {
+    display: block;
+    font-weight: 500;
+    color: var(--text-primary);
+    margin-bottom: 2px;
+}
+.potential-match-item .match-info .subtle-text {
+    font-size: 0.8em;
+    margin-bottom: 0;
+}
+.potential-match-item .match-score-action { /* New wrapper */
+    display: flex;
+    align-items: center;
+    gap: 0.75rem; /* Space between score and button */
+    flex-shrink: 0; /* Prevent shrinking */
+}
+.potential-match-item .match-score {
+    text-align: right;
+    font-size: var(--small-font-size);
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+.potential-match-item .match-score .score-badge {
+    /* Inherits base score-badge styles */
+    white-space: nowrap; /* Prevent wrapping */
+}
+.potential-match-item .match-score-action .shortlist-btn {
+    padding: 0.3rem 0.6rem; /* Small button */
+    font-size: 0.75rem; /* Smaller text */
+    white-space: nowrap;
+}
+.potential-match-item .match-score-action .shortlist-btn .material-icons {
+    font-size: 1.1em; /* Adjust icon size */
+    vertical-align: middle;
+}
+/* Style for button after shortlisting */
+.potential-match-item .match-score-action .shortlist-btn:disabled {
+   background-color: var(--applied-suggestion-bg); /* Use green success style */
+   border-color: var(--applied-suggestion-border);
+   color: var(--applied-suggestion-color);
+   cursor: not-allowed;
+   opacity: 0.8;
+}
+.potential-match-item .match-score-action .shortlist-btn:disabled .material-icons {
+    animation: none; /* Stop animation if any */
+}
+/* Dark theme overrides if needed */
+body.dark-theme .potential-matches-section {
+     background-color: rgba(138, 180, 248, 0.08); /* Lighter blue wash for dark */
+     border-top-color: var(--border-color);
+}
+body.dark-theme .potential-match-item {
+    border-bottom-color: var(--border-color-light);
+}
+ body.dark-theme .potential-match-item:hover {
+    background-color: rgba(138, 180, 248, 0.12);
 }

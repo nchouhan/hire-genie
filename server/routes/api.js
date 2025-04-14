@@ -688,5 +688,115 @@ router.get('/chats/:jobId/:applicantId', (req, res) => {
         res.status(500).json({ message: "Failed to fetch chat history." });
     }
 });
-// --- End New Route ---
+// --- NEW: Associate Existing Applicant with a Job ---
+router.post('/jobs/:jobId/applicants/:applicantId/associate', async (req, res) => {
+    try {
+        const { jobId, applicantId } = req.params;
+        // Optional: Add 'source' or 'reason' in req.body if needed
+        const source = req.body.source || 'Matched from another job';
+
+        console.log(`Attempting to associate Applicant ${applicantId} with Job ${jobId}`);
+
+        const job = dataStore.getJob(jobId);
+        const applicant = dataStore.getApplicant(applicantId);
+
+        if (!job || !applicant) {
+            return res.status(404).json({ message: 'Job or Applicant not found.' });
+        }
+
+        // --- Check if already associated ---
+        // Option A: Check if applicant originally applied for this job
+        // if (applicant.jobId === jobId) {
+        //     return res.status(400).json({ message: 'Applicant originally applied for this job.' });
+        // }
+        // Option B: Check if already in the job's applicant list (more robust)
+        job.applicants = job.applicants || []; // Ensure array exists
+        if (job.applicants.includes(applicantId)) {
+             console.log(`Applicant ${applicantId} already associated with job ${jobId}`);
+             return res.status(200).json({ message: 'Applicant already associated with this job.' , applicantId: applicantId }); // Send success but indicate already done
+        }
+
+        // --- Associate Applicant ---
+        // 1. Add applicant ID to the Job's applicant list
+        job.applicants.push(applicantId);
+        dataStore.updateJob(job);
+
+        // 2. Optionally: Update Applicant's status for this NEW job context
+        // This is complex if an applicant can be active for multiple jobs.
+        // Simplest approach for now: Don't change applicant.currentStageId,
+        // just add them to the job list. HM sees them via the ranked list.
+        // OR: Add a specific stage like 'shortlisted_match' for this job?
+        // For now, we just add to the job list. Ranking will determine visibility.
+
+        console.log(`Successfully associated Applicant ${applicantId} with Job ${jobId}`);
+        res.status(200).json({ message: 'Applicant successfully shortlisted for this job.', applicantId: applicantId });
+
+    } catch (error) {
+        console.error(`Error associating applicant ${req.params.applicantId} with job ${req.params.jobId}:`, error);
+        res.status(500).json({ message: 'Failed to associate applicant with job.' });
+    }
+});
+// --- NEW: Find Potential Matches from Existing Applicants ---
+router.get('/jobs/:newJobId/potential-matches', async (req, res) => {
+    try {
+        const newJobId = req.params.newJobId;
+        const newJob = dataStore.getJob(newJobId);
+
+        if (!newJob) {
+            return res.status(404).json({ message: 'Newly created job not found.' });
+        }
+
+        console.log(`Finding potential matches for new job: ${newJobId} (${newJob.title})`);
+
+        // --- Get ALL existing applicants (excluding those already applied to this new job, if any) ---
+        // This could be inefficient for very large numbers of applicants.
+        // A database would allow more targeted querying (e.g., by broad skills).
+        const allApplicants = Object.values(dataStore.getApplicants());
+        const potentialCandidates = allApplicants.filter(app => app.jobId !== newJobId); // Filter out applicants for the *same* job
+
+        console.log(`Found ${potentialCandidates.length} potential existing candidates to evaluate.`);
+
+        if (potentialCandidates.length === 0) {
+             return res.json({ matches: [], message: "No existing applicants found from other jobs." });
+        }
+
+        // --- Use Gemini/Ranking Service to Score Candidates against the NEW Job ---
+        // We reuse the ranking logic, but apply it to existing candidates against the new job desc
+        // The 'rankApplicantsForJob' should ideally accept the target job separately
+        // For now, we might need a slightly adapted function or pass newJob explicitly
+        // Let's assume rankApplicantsForJob can handle this or adapt it:
+
+        // Conceptual modification needed in geminiService.rankApplicantsForJob:
+        // It should rank the provided 'potentialCandidates' list against the 'newJob' object.
+        // It should store the ranking results under a specific key in the applicant's ranking object,
+        // perhaps a temporary one or directly using newJobId IF we decide to store cross-job rankings.
+        // For simplicity here, we'll assume it returns ranked data without necessarily saving it permanently
+        // to each applicant's main profile immediately unless desired.
+
+        const rankedPotentials = await geminiService.rankApplicantsForJob(newJob, potentialCandidates);
+
+        // --- Format and Select Top Matches ---
+        const topMatches = rankedPotentials
+            .map(app => ({ // Map to a simpler format for the frontend
+                id: app.id,
+                name: app.name, // Maybe anonymize later if needed
+                email: app.email, // Maybe anonymize later if needed
+                originalJobId: app.jobId, // Show which job they originally applied for
+                originalJobTitle: dataStore.getJob(app.jobId)?.title || 'N/A', // Get original job title
+                overallScore: app.rankings?.[newJobId]?.overallScore || 0, // Get score FOR THE NEW JOB
+                summary: app.rankings?.[newJobId]?.generatedSummary || 'N/A' // Get summary FOR THE NEW JOB
+            }))
+            .sort((a, b) => b.overallScore - a.overallScore) // Sort by score descending
+            .slice(0, 10); // Get top 10
+
+        console.log(`Returning top ${topMatches.length} potential matches.`);
+        res.json({ matches: topMatches });
+
+    } catch (error) {
+        console.error("Error finding potential matches:", error);
+        res.status(500).json({ message: 'Failed to find potential matches.' });
+    }
+});
+
+
 module.exports = router;

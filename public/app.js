@@ -27,11 +27,60 @@ function capitalizeFirstLetter(string) {
 
 document.addEventListener('DOMContentLoaded', () => {
     console.log("app.js: DOMContentLoaded fired, initializing app.");
+
+    // --- START: Automatic System Theme Detection ---
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)');
+    console.log("System theme preference detected:", prefersDark.matches ? "Dark" : "Light");
+
+    function applySystemTheme(eventOrQueryList) {
+        // Check if body exists - it really should inside DOMContentLoaded
+        if (!document.body) {
+            console.error("applySystemTheme: document.body not found!");
+            return;
+        }
+
+        const prefersDarkMode = eventOrQueryList.matches;
+        console.log(`applySystemTheme: System prefers dark mode: ${prefersDarkMode}`);
+
+        if (prefersDarkMode) {
+            // Add dark theme
+            if (!document.body.classList.contains('dark-theme')) { // Add only if not present
+                document.body.classList.add('dark-theme');
+                console.log("Added 'dark-theme' class to body.");
+            } else {
+                 console.log("Body already has 'dark-theme' class.");
+            }
+        } else {
+            // Remove dark theme
+            if (document.body.classList.contains('dark-theme')) { // Remove only if present
+                document.body.classList.remove('dark-theme');
+                console.log("Removed 'dark-theme' class from body.");
+            } else {
+                console.log("Body does not have 'dark-theme' class to remove.");
+            }
+        }
+        // Log final classes AFTER applying/removing
+        console.log("Final body classes after applySystemTheme:", document.body.className);
+    } // End applySystemTheme
+
+    // Apply theme on initial load
+    console.log("Applying initial theme based on system preference...");
+    applySystemTheme(prefersDark);
+
+    // Listen for changes in system preference
+    prefersDark.addEventListener('change', applySystemTheme);
+    console.log("Added listener for system theme changes.");
+    // --- END: Automatic System Theme Detection ---
+
     // --- Get References to Splash and App Container ---
     let rankingChartInstance = null; // Store chart instance for later use
     const splashScreen = document.getElementById('splash-screen');
     const appContainer = document.getElementById('app-container');
     
+    // Find potential match candidate from Other Jobs 
+    const potentialMatchesSection = document.querySelector('.potential-matches-section');
+    const potentialMatchesListDiv = document.getElementById('potential-matches-list');
+
     // --- DOM Elements ---
     const themeToggleBtn = document.getElementById('theme-toggle-btn');
     const currentStageObjectivesList = document.getElementById('current-stage-objectives-list');
@@ -194,33 +243,33 @@ document.addEventListener('DOMContentLoaded', () => {
     let recruiterAiChatHistory = {}; // Store chat history for each applicant
     const currentUserEmail = "recruiter@example.com"; // Placeholder - Replace with actual logged-in user
 
-    const currentTheme = localStorage.getItem('theme');
-    // Apply theme on initial load
-    if (currentTheme === 'dark') {
-        document.body.classList.add('dark-mode');
-    } else {
-        // Default to light if no preference or invalid value
-        document.body.classList.remove('dark-mode');
-        // Ensure localStorage reflects light state if invalid
-        if (currentTheme && currentTheme !== 'light') {
-             localStorage.setItem('theme', 'light');
-        }
-    }
+    // const currentTheme = localStorage.getItem('theme');
+    // // Apply theme on initial load
+    // if (currentTheme === 'dark') {
+    //     document.body.classList.add('dark-theme');
+    // } else {
+    //     // Default to light if no preference or invalid value
+    //     document.body.classList.remove('dark-theme');
+    //     // Ensure localStorage reflects light state if invalid
+    //     if (currentTheme && currentTheme !== 'light') {
+    //          localStorage.setItem('theme', 'light');
+    //     }
+    // }
 
-    // --- Event Handlers ---
-    if (themeToggleBtn) {
-        themeToggleBtn.addEventListener('click', () => {
-            document.body.classList.toggle('dark-mode'); // Toggle the class on body
+    // // --- Event Handlers ---
+    // if (themeToggleBtn) {
+    //     themeToggleBtn.addEventListener('click', () => {
+    //         document.body.classList.toggle('dark-mode'); // Toggle the class on body
 
-            // Save the new preference
-            let theme = 'light';
-            if (document.body.classList.contains('dark-mode')) {
-                theme = 'dark';
-            }
-            localStorage.setItem('theme', theme);
-            console.log(`Theme set to: ${theme}`);
-        });
-    }
+    //         // Save the new preference
+    //         let theme = 'light';
+    //         if (document.body.classList.contains('dark-theme')) {
+    //             theme = 'dark';
+    //         }
+    //         localStorage.setItem('theme', theme);
+    //         console.log(`Theme set to: ${theme}`);
+    //     });
+    // }
 
     if (splashScreen && appContainer) {
         // Set timeout for splash screen
@@ -861,6 +910,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // applicantListDiv.innerHTML = '<p>Loading applicants...</p>';
 
         // jobDetailsFullDesc.textContent = `Department: ${job.department || 'N/A'}\nLocation: ${job.location || 'N/A'}\nStatus: ${job.status || 'N/A'}\n\nDescription:\n${job.description || ''}\n\nRequirements:\n${Array.isArray(job.requirements) ? job.requirements.join('\n') : (job.requirements || '')}\n\nNice to Have:\n${job.niceToHave || 'N/A'}\n\nSalary: ${job.salaryRange || 'N/A'}`;
+        if (potentialMatchesSection) potentialMatchesSection.style.display = 'none';
 
         renderJobList();
         // loadApplicantsForJob(jobId);
@@ -2379,9 +2429,141 @@ function renderEducation(container, educations) {
                 jobsData[newJob.id] = newJob;
                 renderJobList();
                 selectJob(newJob.id); // Select the new job
+                
+                // --- AFTER selecting job, trigger potential match search ---
+                findAndDisplayPotentialMatches(newJob.id); // Pass the NEW job ID
+
             } catch (error) { /* Handled by apiRequest */ }
         });
     }
+    async function findAndDisplayPotentialMatches(newJobId) {
+        if (!potentialMatchesSection || !potentialMatchesListDiv) return;
+
+        potentialMatchesSection.style.display = 'block'; // Show the section
+        potentialMatchesListDiv.innerHTML = '<p><i>Checking existing applicants...</i></p>'; // Loading state
+
+        try {
+            const result = await apiRequest(`/api/jobs/${newJobId}/potential-matches`); // Call the new endpoint
+
+            if (result && result.matches) {
+                renderPotentialMatches(result.matches); // Call rendering function
+            } else {
+                potentialMatchesListDiv.innerHTML = '<p><i>Could not retrieve potential matches.</i></p>';
+            }
+
+        } catch (error) {
+             console.error("Error fetching potential matches:", error);
+             potentialMatchesListDiv.innerHTML = `<p class="message error">Error finding matches: ${error.message}</p>`;
+        }
+    }
+
+
+    // --- NEW Function: Render Potential Matches ---
+    function renderPotentialMatches(matches) {
+         if (!potentialMatchesListDiv) return;
+         potentialMatchesListDiv.innerHTML = ''; // Clear loading state
+
+        if (!matches || matches.length === 0) {
+            potentialMatchesListDiv.innerHTML = '<p><i>No strong potential matches found among existing applicants.</i></p>';
+            return;
+        }
+
+        const list = document.createElement('ul');
+        list.classList.add('potential-match-list'); // Add class for styling
+
+        matches.forEach(match => {
+            const li = document.createElement('li');
+            li.classList.add('potential-match-item');
+            // Store IDs directly on the list item for easier access
+            li.dataset.applicantId = match.id;
+            li.dataset.jobId = selectedJobId; // The NEW job ID
+   
+            // --- Add Shortlist Button ---
+            li.innerHTML = `
+                <div class="match-info">
+                    <strong>${escapeHtml(match.name || 'N/A')}</strong> (${escapeHtml(match.email || 'N/A')})
+                    <br>
+                    <span class="subtle-text">Orig. Applied For: ${escapeHtml(match.originalJobTitle)}</span>
+                </div>
+                <div class="match-score-action"> <!-- New wrapper -->
+                    <span class="score-badge ${getScoreClass(match.overallScore)}">${match.overallScore}% Fit</span>
+                    <button class="btn secondary-btn btn-small shortlist-btn" title="Add this applicant to the current job">
+                        <span class="material-icons" style="font-size: 1em;">playlist_add</span> Shortlist
+                    </button>
+                </div>
+            `;
+            // --- End Add ---
+   
+            // Add listener to the SHORTLIST button specifically
+            const shortlistBtn = li.querySelector('.shortlist-btn');
+            if (shortlistBtn) {
+                 shortlistBtn.addEventListener('click', (event) => {
+                       event.stopPropagation(); // Prevent li click listener if any
+                       handleShortlistClick(event); // Call handler
+                 });
+            }
+   
+            // Optional: Add click listener to the whole LI to view profile? (Needs care)
+            // li.addEventListener('click', () => { ... });
+   
+            list.appendChild(li);
+       });
+
+        potentialMatchesListDiv.appendChild(list);
+    }
+    // Helper function to get score class (reuse from ranked list)
+    function getScoreClass(score) {
+        if (score >= 85) return 'high';
+        if (score >= 70) return 'medium';
+        return 'low';
+    }
+// --- NEW Function: Handle Shortlist Button Click ---
+async function handleShortlistClick(event) {
+    const button = event.currentTarget;
+    const listItem = button.closest('.potential-match-item'); // Get parent LI
+    const applicantId = listItem?.dataset.applicantId;
+    const jobId = listItem?.dataset.jobId; // This should be the ID of the NEW job
+
+    if (!applicantId || !jobId) {
+        console.error("Missing applicantId or jobId on shortlist item.");
+        alert("Could not shortlist applicant: context missing.");
+        return;
+    }
+
+    console.log(`Shortlisting Applicant ${applicantId} for Job ${jobId}...`);
+    button.disabled = true;
+    button.innerHTML = `<span class="material-icons" style="font-size: 1em;">check</span> Shortlisted`; // Optimistic UI update
+
+    try {
+        const result = await apiRequest(`/api/jobs/${jobId}/applicants/${applicantId}/associate`, 'POST', {
+             source: `Shortlisted from potential matches (originally applied for job ${listItem.querySelector('.subtle-text')?.textContent || 'N/A'})` // Example source
+        });
+
+        console.log("Shortlist result:", result);
+        // Keep button disabled and text as "Shortlisted" on success
+        // Optionally remove the item from the potential list? Or just disable button?
+
+        // IMPORTANT: Refresh the *main* applicant list if it's visible
+        // If using Option 1 (simple list in Job Details), refresh it
+        if (document.getElementById('job-details-view')?.classList.contains('active')) {
+             console.log("Refreshing simple applicant list in job details view...");
+             loadAndRenderSimpleApplicantList(jobId); // Reload the list shown in job-details
+        }
+         // If the ranked list view is somehow active, could refresh that too
+         else if (document.getElementById('ranked-list-view')?.classList.contains('active')) {
+              console.log("Refreshing ranked applicant list view...");
+              loadRankedApplicants(jobId);
+         }
+
+
+    } catch (error) {
+        console.error("Failed to shortlist applicant:", error);
+        alert(`Failed to shortlist: ${error.message}`);
+        // Revert button state on error
+        button.disabled = false;
+        button.innerHTML = `<span class="material-icons" style="font-size: 1em;">playlist_add</span> Shortlist`;
+    }
+} // End handleShortlistClick
 
     if (backToJobBtn) {
         backToJobBtn.addEventListener('click', () => {

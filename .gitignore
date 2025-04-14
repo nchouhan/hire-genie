@@ -37,6 +37,10 @@ server/data/
 server/upload/
 !server/upload/.gitkeep
 
+#Upload folder for Resumes
+server/uploads/
+!server/uploads/.gitkeep
+
 # Dependency directories
 bower_components/
 jspm_packages/

@@ -7,7 +7,7 @@ const pdf = require('pdf-parse'); // Import pdf-parse
 const fs = require('fs-extra'); // Import fs-extra
 const dataStore = require('./dataStore'); 
 const API_KEY = process.env.GEMINI_API_KEY;
-const BASE_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro-latest:generateContent?key=${API_KEY}`; // Adjust model name if needed
+const BASE_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${API_KEY}`; // Adjust model name if needed
 
 async function callGeminiAPI(prompt, context = []) {
     if (!API_KEY) {
@@ -230,102 +230,186 @@ async function parseResumeAdvanced(file, links) {
 
 
 // --- Rank Applicants (Conceptual) ---
-async function rankApplicantsForJob(job, applicants) {
-    // 1. Analyze Job Data (keywords, weights from job.jdKeywords, job.rankingModelWeights)
-    // 2. For each applicant:
-    //    - Compare applicant.skills, applicant.workExperience, etc. against job criteria.
-    //    - Calculate scores for each category (skillMatch, experienceRelevance, etc.).
-    //    - Apply weights to get overallScore.
-    //    - Generate summary using Gemini.
-    //    - Perform "hidden gem" analysis (complex AI task).
-    // 3. Store results in applicant.rankings[job.id]
+async function rankApplicantsForJob(targetJob, applicantsToRank) {
+    console.log(`Ranking check for ${applicantsToRank.length} applicants against TARGET job ${targetJob.id}...`);
+    const targetJobId = targetJob.id;
+    let processingPromises = [];
 
-    console.log(`Ranking ${applicants.length} applicants for job ${job.id}...`);
-    const jobId = job.id;
-    let needsRankingCount = 0;
-    let processingPromises = []; // To run AI calls potentially in parallel
+    // Prepare Job context once
+    const jobContext = `
+        --- TARGET JOB DETAILS (ID: ${targetJobId}) ---
+        Title: ${targetJob.title || 'N/A'}
+        Description Summary: ${formatDataForPrompt(targetJob.description, 600)}
+        Requirements:
+        - ${formatDataForPrompt(targetJob.requirements)}
+        Nice-to-Have:
+        - ${formatDataForPrompt(targetJob.niceToHave)}
+    `;
+    // Prepare list of ranking criteria
+    const rankingCriteria = [
+        "skillMatch (Technical skills, tools, languages relevant to JD requirements)",
+        "experienceRelevance (Years/roles matching JD, industry relevance)",
+        "achievementImpact (Quantifiable results, alignment with JD goals inferred from experience)",
+        "educationCerts (Relevance of degrees and certifications to the role)",
+        "innovationPotential (Inferred from unique projects, patents, papers, portfolio creativity, or complex problem-solving described)"
+    ];
 
-    // Placeholder: This needs significant implementation using Gemini for summaries/insights
-    // and potentially complex local logic for scoring based on extracted keywords/weights.
+    for (const applicant of applicantsToRank) {
+        // Check if ranking for THIS targetJobId already exists and seems valid
+        const existingRanking = applicant?.rankings?.[targetJobId];
+        const needsRanking = !existingRanking || !existingRanking.overallScore || existingRanking.generatedSummary?.includes("failed"); // Re-rank if no score or previously failed
 
-    for (const applicant of applicants) {
-        // --- Check if ranking for THIS job already exists and seems valid ---
-        // (Add more checks if needed - e.g., check timestamp if ranks expire)
-        if (applicant && applicant.rankings && applicant.rankings[jobId] && applicant.rankings[jobId].overallScore !== undefined) {
-            console.log(` > Applicant ${applicant.id}: Ranking already exists.`);
-            continue; // Skip to the next applicant
+        if (!needsRanking) {
+            console.log(` > Applicant ${applicant.id}: Ranking already exists for target job ${targetJobId}.`);
+            continue; // Skip
         }
 
-        // --- Applicant needs ranking ---
-        needsRankingCount++;
-        console.log(` > Applicant ${applicant.id}: Needs ranking/re-ranking.`);
+        console.log(` > Applicant ${applicant.id}: Needs ranking/re-ranking for target job ${targetJobId}.`);
 
-        // --- Prepare the actual ranking call (potentially parallel) ---
-        // This is still conceptual - you need the detailed comparison logic here
-        // It should calculate individual scores and call Gemini ONLY for the summary
-        const rankPromise = (async () => { // Wrap in async IIFE for parallel execution
+        const rankPromise = (async () => {
             try {
-                // SIMPLIFIED SCORING (Replace with actual logic comparing applicant data to job.jdKeywords)
-                let overallScore = Math.random() * 50 + 50;
-                let skillMatch = Math.random() * 30 + 70;
-                // ... calculate other scores ...
+                // --- Prepare Applicant Context for Prompt ---
+                const applicantContext = `
+                    --- CANDIDATE PROFILE (ID: ${applicant.id}) ---
+                    AI Parsed Summary: ${formatDataForPrompt(applicant.parsedSummary, 300)}
+                    Skills Parsed: ${applicant.skills?.map(s => `${s.name}${s.proficiencyLevel ? ` (${s.proficiencyLevel})` : ''}`).join(', ') || 'Not available'}
+                    Work Experience Summary:
+                    ${applicant.workExperience?.map(exp => `- ${exp.title || 'Role'} at ${exp.company || 'Company'} (${exp.duration || 'N/A'}): ${formatDataForPrompt(exp.description || (exp.achievements||[]).join('. '), 200)}`).join('\n') || 'Not available'}
+                    Education Summary:
+                    ${applicant.education?.map(edu => `- ${edu.degree || 'Degree'} from ${edu.institution || 'Institution'}`).join('\n') || 'Not available'}
+                    Certifications: ${formatDataForPrompt(applicant.certifications)}
+                `;
 
-                // Generate Summary via Gemini (Only for those needing ranking)
-                const summaryPrompt = `Summarize why applicant ${applicant.name || 'ID '+applicant.id.slice(-4)} is a potential fit (or not) for the ${job.title} role, based on their profile (skills: ${applicant.skills?.map(s=>s.name).join(', ')}, experience: ${applicant.workExperience?.length} roles). Highlight strengths and potential gaps regarding required skills: ${job.jdKeywords?.requiredSkills?.map(s=>s.skill).join(', ')}. Be concise (1-2 sentences).`;
-                let generatedSummary = "AI summary generation failed."; // Default on error
-                 try {
-                     generatedSummary = await callGeminiAPI(summaryPrompt);
-                     generatedSummary = generatedSummary.substring(0, 250) + (generatedSummary.length > 250 ? '...' : '');
-                 } catch (summaryError) {
-                     console.error("Failed to generate summary for applicant", applicant.id, summaryError);
+                // --- Construct the Ranking Prompt ---
+                const prompt = `
+                    You are an expert AI Recruitment Analyst. Evaluate the provided Candidate Profile against the Target Job Details.
+                    Provide scores (0-100) for each of the following categories, considering the definition provided:
+                    ${rankingCriteria.map(c => `- ${c}`).join('\n')}
+
+                    Also, provide an 'overallScore' (0-100) representing the candidate's overall fit for this specific job, considering all factors.
+                    Finally, write a concise 'generatedSummary' (1-3 sentences) highlighting the candidate's key strengths and potential weaknesses *specifically* in relation to this job opening.
+
+                    Base your analysis STRICTLY on the provided text snippets. If information is missing for a category, assign a lower score or mention the gap in the summary.
+
+                    Return ONLY a valid JSON object with these exact keys: "overallScore", "skillMatch", "experienceRelevance", "achievementImpact", "educationCerts", "innovationPotential", "generatedSummary". Example: {"overallScore": 85, "skillMatch": 90, ..., "generatedSummary": "Strong technical fit..."}
+
+                    ${jobContext}
+
+                    ${applicantContext}
+
+                    Generate the JSON object:
+                `;
+
+                // --- Call Gemini ---
+                const rawResponse = await callGeminiAPI(prompt);
+                
+                console.log(`Raw Gemini Ranking Response for ${applicant.id}:`, rawResponse.substring(0, 100) + "...");
+
+                // --- Clean and Parse Response ---
+                let workString = rawResponse.trim();
+                // 1. Markdown Fence Removal
+                const firstBrace = workString.indexOf('{');
+                // Only expect object for ranking response
+                if (firstBrace !== -1 && /^\s*```(json)?/i.test(workString.substring(0, firstBrace))) {
+                    workString = workString.substring(firstBrace);
+                    console.log(`Cleaned start fence for ${applicant.id}`);
+                } else if (/^\s*```(json)?/i.test(workString)) { // If fence but no brace found early
+                     const lines = workString.split('\n');
+                     if (lines[0].trim().startsWith('```')) {
+                         workString = lines.slice(1).join('\n');
+                         console.warn(`Attempted to remove fence line for ${applicant.id}`);
+                     }
+                }
+                const lastBrace = workString.lastIndexOf('}');
+                if (lastBrace !== -1) {
+                    const trailingContent = workString.substring(lastBrace + 1).trim();
+                    if (trailingContent === '```') {
+                        workString = workString.substring(0, lastBrace + 1);
+                        console.log(`Cleaned end fence for ${applicant.id}`);
+                    } else if (workString.trim().endsWith('```')) {
+                         workString = workString.substring(0, workString.lastIndexOf('```'));
+                         console.warn(`Cleaned end fence simply for ${applicant.id}`);
+                    }
+                } else if (workString.trim().endsWith('```')) {
+                     workString = workString.substring(0, workString.lastIndexOf('```'));
+                     console.warn(`Cleaned end fence without finding } for ${applicant.id}`);
+                }
+                workString = workString.trim();
+                console.log(`After Fence Cleaning for ${applicant.id}:`, workString.substring(0, 100) + "...");
+
+                // 2. Remove Comments
+                workString = workString.replace(/\\"|"(?:\\"|[^"])*"|(\/\/.*$)/gm, (m, g1) => g1 ? '' : m);
+                workString = workString.trim();
+
+                // 3. Remove Trailing Commas
+                workString = workString.replace(/,\s*([}\]])/g, '$1');
+                console.log(`Final string before parse for ${applicant.id}:`, workString.substring(0, 100) + "...");
+                
+
+                const rankingResult = JSON.parse(workString);
+
+                // --- Validate Parsed Result ---
+                 if (typeof rankingResult.overallScore !== 'number' || typeof rankingResult.skillMatch !== 'number') {
+                     throw new Error("AI response did not contain valid numeric scores.");
                  }
 
-                // Structure the ranking data
+                // --- Structure the final ranking data ---
                 const newRanking = {
-                    overallScore: Math.round(overallScore),
-                    skillMatch: Math.round(skillMatch),
-                    experienceRelevance: Math.round(Math.random() * 40 + 60),
-                    achievementImpact: Math.round(Math.random() * 50 + 50),
-                    educationCerts: Math.round(Math.random() * 50 + 50),
-                    innovationPotential: Math.round(Math.random() * 40 + 50),
-                    generatedSummary: generatedSummary,
-                    isHiddenGem: Math.random() > 0.9,
-                    rankedAt: new Date().toISOString() // Add timestamp
+                    overallScore: Math.round(rankingResult.overallScore ?? 0),
+                    skillMatch: Math.round(rankingResult.skillMatch ?? 0),
+                    experienceRelevance: Math.round(rankingResult.experienceRelevance ?? 0),
+                    achievementImpact: Math.round(rankingResult.achievementImpact ?? 0),
+                    educationCerts: Math.round(rankingResult.educationCerts ?? 0),
+                    innovationPotential: Math.round(rankingResult.innovationPotential ?? 0),
+                    generatedSummary: (rankingResult.generatedSummary || "AI summary missing.").substring(0, 300), // Limit length
+                    isHiddenGem: false, // Keep placeholder or develop separate logic/prompt
+                    rankedAt: new Date().toISOString()
                 };
 
-                // Update the applicant object IN MEMORY first
+                // Save to applicant object
                 if (!applicant.rankings) applicant.rankings = {};
-                applicant.rankings[jobId] = newRanking;
-
-                // Persist the change to the data store
-                dataStore.updateApplicant(applicant); // Save the updated applicant with new ranking
-                console.log(` > Applicant ${applicant.id}: Ranking calculated and saved.`);
+                applicant.rankings[targetJobId] = newRanking;
+                dataStore.updateApplicant(applicant);
+                console.log(` > Applicant ${applicant.id}: Ranking for target job ${targetJobId} calculated and SAVED by AI.`);
 
             } catch (rankingError) {
-                console.error(`Failed to rank applicant ${applicant.id}:`, rankingError);
-                // Optionally store an error state in applicant.rankings[jobId]
+                console.error(`Failed to rank applicant ${applicant.id} for target job ${targetJobId}:`, rankingError);
+                // Store error state
+                 if (!applicant.rankings) applicant.rankings = {};
+                 applicant.rankings[targetJobId] = { overallScore: 0, generatedSummary: `Ranking Error: ${rankingError.message.substring(0,100)}...`, rankedAt: new Date().toISOString() };
+                 // Save error state? Or just don't update? Decide based on desired behavior.
+                 // dataStore.updateApplicant(applicant); // Uncomment to save error state
             }
-        })(); // Immediately invoke the async function
+        })(); // End IIFE
 
         processingPromises.push(rankPromise);
 
-    } 
+    } // End for loop
+
+    // Wait for completion
     if (processingPromises.length > 0) {
-        console.log(`Waiting for ${processingPromises.length} ranking processes to complete...`);
         await Promise.all(processingPromises);
         console.log("All ranking processes finished.");
-        // Re-fetch applicants from datastore AFTER saving to ensure consistency? Or trust in-memory update?
-        // For simplicity now, we trust the in-memory update:
-        // return applicants;
-        // Safer: Refetch the updated list
-         return dataStore.getApplicantsForJob(jobId);
-   } else {
-       console.log("No applicants needed ranking.");
-       return applicants; // Return the original list if no ranking was needed
-   }
-
-    // Return applicants (potentially sorted, though sorting is done on frontend route)
-    return applicants;
+        // Re-fetch to ensure consistency after saves
+        return dataStore.getApplicantsForJob(targetJobId); // Re-fetch using the original job ID if ranking was for self, otherwise might need adjustment
+    } else {
+        console.log("No applicants needed ranking.");
+        return applicantsToRank; // Return original list if no ranking needed
+    }
+}
+// Helper function to format data for the prompt (to manage length)
+function formatDataForPrompt(data, maxLength = 400) {
+    let text = '';
+    if (Array.isArray(data)) {
+        text = data.join('\n- ');
+    } else if (typeof data === 'string') {
+        text = data;
+    }
+    // Add more formatting if needed (e.g., for objects)
+    if (text.length > maxLength) {
+        return text.substring(0, maxLength) + "...";
+    }
+    return text || 'N/A';
 }
 
 // --- Generate Interview Questions (Conceptual) ---
