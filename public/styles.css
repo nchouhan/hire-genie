@@ -32,6 +32,14 @@
     --nav-button-active-text: var(--google-blue);
     --hub-option-hover-bg: var(--background-light);
     --hub-option-border: var(--border-color);
+    --text-primary: #202124;
+    --text-secondary: #5f6368;
+    --background-light: #f8f9fa; /* Main page/splash background */
+    --background-white: #ffffff; /* Card backgrounds */
+    --border-color: #dadce0;
+    /* ... add specific splash loader vars if needed ... */
+    --splash-loader-border: rgba(0, 0, 0, 0.1);
+    --splash-loader-top: var(--google-blue); /* Use blue */
 }
 /* --- NEW: Dark Mode Variable Overrides --- */
 body.dark-theme {
@@ -65,6 +73,13 @@ body.dark-theme {
     --nav-button-active-text: #8ab4f8; /* Lighter blue */
     --hub-option-hover-bg: #3c4043;
     --hub-option-border: #5f6368;
+    --text-primary: #e8eaed;
+    --text-secondary: #9aa0a6;
+    --background-light: #202124;     /* Dark page/splash background */
+    --background-white: #2c3136;     /* Dark card backgrounds */
+    --border-color: #5f6368;
+    --splash-loader-border: rgba(255, 255, 255, 0.2);
+    --splash-loader-top: #8ab4f8; /* Lighter blue */
 }
 
 /* --- NEW Main Layout --- */
@@ -507,12 +522,13 @@ header {
     display: flex;
     align-items: center;
     justify-content: center;
-    background-color: #1a1a1a; /* Dark sophisticated background */
-    /* Optional: Subtle gradient background */
-    /* background: linear-gradient(135deg, #232526 0%, #414345 100%); */
+    background-color: var(--background-light); /* USE VARIABLE */
     opacity: 1;
     visibility: visible;
-    transition: opacity 0.8s ease-out, visibility 0.8s linear; /* Fade out transition */
+    transition: opacity 0.8s ease-out, visibility 0.8s linear, background-color var(--base-transition); /* Add background transition */
+    opacity: 1;
+    visibility: visible;
+    /* transition: opacity 0.8s ease-out, visibility 0.8s linear; Fade out transition */
 }
 
 #splash-screen.hidden {
@@ -523,7 +539,7 @@ header {
 
 .splash-content {
     text-align: center;
-    color: #e0e0e0; /* Light text on dark background */
+    color: var(--text-primary); /* USE VARIABLE */
 }
 
 /* Style the title on the splash screen */
@@ -537,7 +553,7 @@ header {
 .splash-tagline {
     font-size: 1.1rem;
     font-weight: 300; /* Lighter weight */
-    color: rgba(255, 255, 255, 0.7); /* Subtler text color */
+    color: var(--text-secondary); /* USE VARIABLE */
     margin-bottom: 2rem;
     letter-spacing: 0.5px;
 }
@@ -547,8 +563,8 @@ header {
     display: inline-block;
     width: 20px;
     height: 20px;
-    border: 3px solid rgba(255, 255, 255, 0.2); /* Light border */
-    border-top-color: #fff; /* White top border */
+    border: 3px solid var(--splash-loader-border); /* USE VARIABLE */
+    border-top-color: var(--splash-loader-top); /* USE VARIABLE */
     border-radius: 50%;
     animation: spin 1s linear infinite;
 }
